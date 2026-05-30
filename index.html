@@ -377,8 +377,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   align-items: center;
   flex: 1;
   overflow-x: auto;
+  flex-wrap: nowrap;
   padding: 0 4px;
+  scrollbar-width: none;
 }
+.bat-stats::-webkit-scrollbar { display: none; }
 .bat-stat {
   display: flex;
   flex-direction: column;
@@ -766,6 +769,83 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   .split-btn { padding: 7px 10px; font-size: 11px; }
   .section-title { font-size: 18px; }
 }
+
+/* ===================== */
+/* MOBILE PLAYER ROWS    */
+/* ===================== */
+@media (max-width: 768px) {
+  /* Conectar filas como tabla unificada */
+  .bat-header-row {
+    display: none; /* ocultar header horizontal en mobile — lo reemplaza el label inline */
+  }
+  .bat-row {
+    flex-direction: column;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+  .bat-row-wrap:first-of-type .bat-row {
+    border-top: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .bat-row-wrap { border-bottom: 1px solid var(--border); }
+  .bat-row-wrap:last-of-type .bat-row {
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  /* Info row: nombre completo */
+  .bat-info {
+    min-width: unset !important;
+    max-width: unset !important;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(37,43,56,.5);
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .bat-name {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    font-size: 13px !important;
+    font-weight: 600;
+  }
+  .bat-rank { display: inline; font-size: 11px; color: var(--text3); }
+
+  /* Stats row: scroll horizontal limpio */
+  .bat-stats {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    padding: 4px 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bat-stats::-webkit-scrollbar { display: none; }
+  .bat-stat {
+    min-width: 48px;
+    flex-shrink: 0;
+    padding: 5px 4px;
+  }
+  .bat-stat-lbl { font-size: 9px; }
+  .bat-stat-val { font-size: 12px; }
+
+  /* Gamelog también conectado */
+  .gamelog-panel {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+  
+  /* GL info row en mobile */
+  .bat-info.gl-info {
+    flex-direction: row;
+    border-bottom: none;
+    width: auto;
+    min-width: 140px;
+    max-width: 140px;
+    border-right: 1px solid var(--border);
+    padding: 6px 8px;
+  }
+}
 </style>
 </head>
 <body>
@@ -1040,7 +1120,7 @@ function renderRoster(roster) {
 }
 
 function pitcherHTML(p, rank) {
-  const handLabel = p.hand === 'L' ? 'ZUR' : 'DER';
+  const handLabel = p.hand === 'L' ? 'Z' : 'D';
   return `<div class="bat-row-wrap" id="prow-wrap-${p.id}">
     <div class="bat-row" id="prow-${p.id}" onclick="togglePitcherLog(${p.id}, '${escName(p.name)}')" style="cursor:pointer">
       <div class="bat-info">
@@ -1326,7 +1406,7 @@ function renderBatRoster(roster) {
 }
 
 function batterHTML(p, rank) {
-  const handLabel = p.bat === 'L' ? 'ZUR' : p.bat === 'S' ? 'SWT' : 'DER';
+  const handLabel = p.bat === 'L' ? 'Z' : p.bat === 'S' ? 'A' : 'D';
   return `<div class="bat-row-wrap" id="bat-wrap-${p.id}">
     <div class="bat-row" id="bat-row-${p.id}" onclick="toggleGameLog(${p.id}, '${escName(p.name)}')" style="cursor:pointer">
       <div class="bat-info">
@@ -1387,7 +1467,7 @@ function updateBatterHand(pid, bat) {
   const tag = document.getElementById('bat-hand-' + pid);
   if (!tag) return;
   tag.className = `hand-tag hand-${bat}`;
-  tag.textContent = bat === 'L' ? 'ZURDO' : bat === 'S' ? 'SWITCH' : 'DERECHO';
+  tag.textContent = bat === 'L' ? 'Z' : bat === 'S' ? 'A' : 'D';
   if (batRosterCache[currentBatTeamId]) {
     const p = batRosterCache[currentBatTeamId].find(x => x.id === pid);
     if (p) p.bat = bat;
