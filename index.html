@@ -724,7 +724,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 #team-pills::-webkit-scrollbar,
 #bat-team-pills::-webkit-scrollbar { display: none; }
-.team-tab-bar { flex-wrap: nowrap; overflow: hidden; }
+.team-tab-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.team-tab-bar::-webkit-scrollbar { display: none; }
 
 /* ===================== */
 /* MOBILE RESPONSIVE     */
@@ -963,6 +964,107 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 @media (min-width: 769px) {
   .mobile-team-dropdown { display: none; }
   .desktop-pills { display: flex; }
+}
+
+/* ===================== */
+/* MOBILE TABLE FIXES v3 */
+/* ===================== */
+@media (max-width: 768px) {
+  /* bat-info: más ancho + sticky, ocultar rank para dar espacio al nombre */
+  .bat-info {
+    min-width: 185px !important;
+    max-width: 185px !important;
+    width: 185px !important;
+    position: sticky !important;
+    left: 0;
+    z-index: 8;
+    background: var(--bg2);
+    flex-shrink: 0 !important;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: none !important;
+    flex-direction: row !important;
+    padding: 8px 8px !important;
+  }
+  .bat-header-row .bat-info { background: var(--bg3); z-index: 9; }
+  .bat-row:hover .bat-info { background: var(--bg3); }
+  .bat-row.bat-row-active .bat-info { background: var(--bg4); }
+
+  /* Ocultar número de rank en info — más espacio para el nombre */
+  .bat-info .bat-rank { display: none !important; }
+
+  /* Nombre completo: más espacio disponible */
+  .bat-name {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* Gamelog info: misma anchura que bat-info para alineación perfecta */
+  .bat-info.gl-info {
+    min-width: 185px !important;
+    max-width: 185px !important;
+    width: 185px !important;
+    background: var(--bg) !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 5px;
+    padding: 6px 8px !important;
+    align-items: center;
+    overflow: hidden;
+  }
+  .gl-header-row .bat-info { background: var(--bg3) !important; }
+  .gl-date { font-size: 11px; flex-shrink: 0; white-space: nowrap; }
+  .gl-opp  { font-size: 11px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gl-score{ font-size: 11px; flex-shrink: 0; white-space: nowrap; }
+
+  /* Filas de datos: ancho fijo para que todo scrolle junto */
+  .bat-row {
+    flex-direction: row !important;
+    min-width: 950px;
+  }
+  .bat-header-row {
+    display: flex !important;
+    min-width: 950px;
+    position: sticky;
+    top: 0;
+    z-index: 12;
+  }
+
+  /* bat-row-wrap: mismo min-width para que el borde inferior no se corte */
+  .bat-row-wrap { min-width: 950px; }
+
+  /* Gamelog rows: mismo ancho */
+  .gl-row, .gl-header-row { min-width: 950px; }
+  .gamelog-panel { overflow-x: visible; }
+
+  /* Celdas de stat: ancho exacto y fijo */
+  .bat-stats {
+    overflow-x: visible !important;
+    flex-wrap: nowrap !important;
+    flex: 1;
+    padding: 0 2px;
+  }
+  .bat-stat {
+    width: 54px !important;
+    min-width: 54px !important;
+    max-width: 54px !important;
+    flex-shrink: 0 !important;
+    padding: 5px 2px;
+  }
+  .bat-stat-lbl { font-size: 9px; }
+  .bat-stat-val { font-size: 12px; }
+
+  /* Scroll container principal */
+  #roster-area, #bat-roster-area {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #roster-area::-webkit-scrollbar,
+  #bat-roster-area::-webkit-scrollbar { display: none; }
 }
 </style>
 </head>
