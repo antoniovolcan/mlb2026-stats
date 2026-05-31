@@ -463,41 +463,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     drop-shadow( 1px  1px 0 rgba(255,255,255,.22));
 }
 .st-team-logo { width: 32px; height: 32px; object-fit: contain; display: block; margin: auto; }
-/* Stat description tooltips */
-[data-stat-tip] { position: relative; cursor: help; }
-[data-stat-tip]:hover::after {
-  content: attr(data-stat-tip);
-  position: absolute;
-  bottom: calc(100% + 7px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text2);
-  font-size: 11px;
-  font-family: 'Sora', sans-serif;
-  font-weight: 400;
-  white-space: normal;
-  width: 170px;
-  text-align: center;
-  padding: 6px 10px;
-  pointer-events: none;
-  z-index: 9000;
-  box-shadow: 0 4px 16px rgba(0,0,0,.5);
-  line-height: 1.4;
-}
-[data-stat-tip]:hover::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--border2);
-  pointer-events: none;
-  z-index: 9001;
-}
+[data-stat-tip] { cursor: help; }
 .standings-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 .division-block { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; }
 .division-title {
@@ -1521,10 +1487,10 @@ function renderRoster(roster) {
     html = `<div class="error-msg">No se encontraron pitchers en este roster.</div>`;
   } else {
     const headerStats = PITCH_INLINE.map(s =>
-      `<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600">${s.l}</span></span>`
+      `<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600"${s.tip ? ` data-stat-tip onmouseenter="showStatTip(event,'${s.tip}')" onmouseleave="hideStatTip()"` : ''}>${s.l}</span></span>`
     ).join('');
     html += `<div class="bat-header-row">
-      <div class="bat-info" style="border-right:1px solid var(--border)"><span class="bat-rank">#</span><span class="bat-name">Pitcher</span><span style="width:30px"></span><span class="bat-pos">POS</span></div>
+      <div class="bat-info" style="border-right:1px solid var(--border)"><span class="bat-rank">#</span><span class="bat-name">Pitcher</span></div>
       <div class="bat-stats">${headerStats}</div>
     </div>`;
     roster.forEach((p, i) => { html += pitcherHTML(p, i + 1); });
@@ -1541,7 +1507,6 @@ function pitcherHTML(p, rank) {
         <span class="bat-rank">${rank}</span>
         <span class="bat-name" id="pname-${p.id}">${p.name}</span>
         <span class="hand-tag hand-${p.hand}" id="phand-${p.id}">${handLabel}</span>
-        <span class="bat-pos">${p.pos}</span>
       </div>
       <div class="bat-stats" id="sp-${p.id}">
         <span class="bat-loading"><div class="spinner" style="width:12px;height:12px;border-width:1.5px"></div></span>
@@ -1628,16 +1593,15 @@ const PITCH_INLINE = [
   {k:'hits',           l:'H'},
   {k:'runs',           l:'R', alt:'earnedRuns'},
   {k:'homeRuns',       l:'HR'},
-  {k:'era',            l:'ERA',  dec:2},
-  {k:'whip',           l:'WHIP', dec:2},
+  {k:'era',            l:'ERA',  dec:2, tip:'Carreras limpias por 9 entradas. Más bajo = mejor pitcher. Élite: menos de 3.00'},
+  {k:'whip',           l:'WHIP', dec:2, tip:'Hits + BB permitidos por entrada. Más bajo = mejor control. Élite: menos de 1.00'},
   {k:'wins',           l:'W'},
   {k:'losses',         l:'L'},
   {k:'gamesPlayed',    l:'G'},
   {k:'gamesStarted',   l:'GS'},
-  {k:'qualityStarts',  l:'QS'},
-  {k:'avg',            l:'AVG', dec:3},
-  {k:'obp',            l:'OBP', dec:3},
-  {k:'ops',            l:'OPS', dec:3},
+  {k:'avg',            l:'AVG', dec:3, tip:'Promedio de bateo en contra. Más bajo = mejor para el pitcher. Élite: .220 o menos'},
+  {k:'obp',            l:'OBP', dec:3, tip:'Qué tan seguido el bateador llega a base vs este pitcher. Más bajo = mejor. Élite: .280 o menos'},
+  {k:'ops',            l:'OPS', dec:3, tip:'OBP + SLG del bateador vs este pitcher. Más bajo = mejor. Élite: .650 o menos'},
 ];
 
 function buildPitchInline(data) {
@@ -1833,7 +1797,7 @@ function renderBatRoster(roster) {
     // Header row
     html += `<div class="bat-header-row">
       <div class="bat-info"><span class="bat-rank">#</span><span class="bat-name">Jugador</span></div>
-      <div class="bat-stats">${BAT_INLINE.map(s=>`<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600"${s.tip ? ` data-stat-tip="${s.tip}"` : ''}>${s.l}</span></span>`).join('')}</div>
+      <div class="bat-stats">${BAT_INLINE.map(s=>`<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600"${s.tip ? ` data-stat-tip onmouseenter="showStatTip(event,'${s.tip}')" onmouseleave="hideStatTip()"` : ''}>${s.l}</span></span>`).join('')}</div>
     </div>`;
     roster.forEach((p, i) => { html += batterHTML(p, i + 1); });
   }
@@ -2328,6 +2292,16 @@ function positionTip(e, tip) {
 }
 
 function hideGameTip() {
+  document.getElementById('global-tip').style.display = 'none';
+}
+
+function showStatTip(e, text) {
+  const tip = document.getElementById('global-tip');
+  tip.innerHTML = `<div style="padding:10px 14px;max-width:200px;font-family:'Sora',sans-serif;font-size:12px;color:var(--text2);line-height:1.5">${text}</div>`;
+  tip.style.display = 'block';
+  positionTip(e, tip);
+}
+function hideStatTip() {
   document.getElementById('global-tip').style.display = 'none';
 }
 
