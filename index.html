@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MLB 2026 — Stats Personales</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&family=Source+Code+Pro:wght@400;500&family=Roboto+Mono:wght@400;500&family=Inconsolata:wght@400;500&family=Space+Mono:wght@400&family=Anonymous+Pro:wght@400&family=Noto+Sans+Mono:wght@400;500&family=Ubuntu+Mono&family=Share+Tech+Mono&family=Courier+Prime:wght@400&family=PT+Mono&family=Azeret+Mono:wght@400;500&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0c0f;
@@ -392,6 +392,23 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .bat-stat-lbl { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 2px; }
 .bat-stat-val { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); }
+
+/* FONT TEST — 15 fuentes para elegir */
+.font-test-1  .bat-stat-val { font-family: 'IBM Plex Mono', monospace; }
+.font-test-2  .bat-stat-val { font-family: 'JetBrains Mono', monospace; }
+.font-test-3  .bat-stat-val { font-family: 'Fira Code', monospace; }
+.font-test-4  .bat-stat-val { font-family: 'Source Code Pro', monospace; }
+.font-test-5  .bat-stat-val { font-family: 'Roboto Mono', monospace; }
+.font-test-6  .bat-stat-val { font-family: 'Inconsolata', monospace; }
+.font-test-7  .bat-stat-val { font-family: 'Space Mono', monospace; }
+.font-test-8  .bat-stat-val { font-family: 'Anonymous Pro', monospace; }
+.font-test-9  .bat-stat-val { font-family: 'Noto Sans Mono', monospace; }
+.font-test-10 .bat-stat-val { font-family: 'Ubuntu Mono', monospace; }
+.font-test-11 .bat-stat-val { font-family: 'Share Tech Mono', monospace; }
+.font-test-12 .bat-stat-val { font-family: 'Courier Prime', monospace; }
+.font-test-13 .bat-stat-val { font-family: 'PT Mono', monospace; }
+.font-test-14 .bat-stat-val { font-family: 'Azeret Mono', monospace; }
+.font-test-15 .bat-stat-val { font-family: 'Chivo Mono', monospace; }
 .bat-loading { display: flex; align-items: center; padding: 0 12px; }
 
 /* STANDINGS */
@@ -402,13 +419,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  font-size: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 700;
   font-family: 'DM Mono', monospace;
-  margin-right: 2px;
+  margin-right: 3px;
   position: relative;
   cursor: default;
 }
@@ -1815,7 +1832,8 @@ function renderBatRoster(roster) {
 
 function batterHTML(p, rank) {
   const handLabel = p.bat === 'L' ? 'Z' : p.bat === 'S' ? 'A' : 'D';
-  return `<div class="bat-row-wrap" id="bat-wrap-${p.id}">
+  const fontClass = rank <= 15 ? ` font-test-${rank}` : '';
+  return `<div class="bat-row-wrap${fontClass}" id="bat-wrap-${p.id}">
     <div class="bat-row" id="bat-row-${p.id}" onclick="toggleGameLog(${p.id}, '${escName(p.name)}')" style="cursor:pointer">
       <div class="bat-info">
         <span class="bat-rank">${rank}</span>
