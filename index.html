@@ -6,10 +6,7 @@
 <title>MLB 2026 — Stats Personales</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&family=Source+Code+Pro:wght@400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&family=Space+Mono&family=Anonymous+Pro&family=Noto+Sans+Mono:wght@400;500&family=Ubuntu+Mono&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Courier+Prime&family=PT+Mono&family=Azeret+Mono:wght@400;500&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Azeret+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0c0f;
@@ -188,14 +185,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .pos-tag {
   font-size: 10px;
   font-weight: 500;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   min-width: 24px;
   text-align: right;
 }
 .pitcher-rank {
   font-size: 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   width: 20px;
   text-align: right;
@@ -203,7 +200,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .ip-inline {
   font-size: 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--accent);
   font-weight: 500;
   flex-shrink: 0;
@@ -226,7 +223,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .stats-table th {
   font-size: 10px;
   font-weight: 600;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   text-align: center;
   padding: 6px 6px 4px;
@@ -239,7 +236,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   text-align: center;
   padding: 6px 6px;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   white-space: nowrap;
   border-bottom: 1px solid rgba(37,43,56,.5);
 }
@@ -345,9 +342,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .gl-row:hover { background: var(--bg3); }
 .gl-header-row { background: var(--bg3); }
 .gl-info { gap: 10px !important; }
-.gl-date { font-size: 12px; color: var(--text2); flex-shrink: 0; font-family: 'DM Mono', monospace; }
+.gl-date { font-size: 12px; color: var(--text2); flex-shrink: 0; font-family: 'Azeret Mono', monospace; }
 .gl-opp { font-size: 12px; color: var(--text); font-weight: 500; flex-shrink: 0; }
-.gl-score { font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 600; flex-shrink: 0; }
+.gl-score { font-size: 12px; font-family: 'Azeret Mono', monospace; font-weight: 600; flex-shrink: 0; }
 .gl-win { color: var(--green); }
 .gl-loss { color: var(--red); }
 .gl-empty { padding: .75rem 1rem; font-size: 12px; color: var(--text3); }
@@ -373,9 +370,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   border-right: 1px solid var(--border);
   flex-shrink: 0;
 }
-.bat-rank { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text3); width: 18px; text-align: right; flex-shrink: 0; }
+.bat-rank { font-size: 11px; font-family: 'Azeret Mono', monospace; color: var(--text3); width: 18px; text-align: right; flex-shrink: 0; }
 .bat-name { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bat-pos { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); flex-shrink: 0; }
+.bat-pos { font-size: 10px; font-family: 'Azeret Mono', monospace; color: var(--text3); flex-shrink: 0; }
 .bat-stats {
   display: flex;
   align-items: center;
@@ -395,24 +392,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   flex-shrink: 0;
 }
 .bat-stat-lbl { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 2px; }
-.bat-stat-val { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); }
-
-/* FONT TEST — 15 fuentes para elegir */
-.font-test-1  .bat-stat-val { font-family: 'IBM Plex Mono', monospace; }
-.font-test-2  .bat-stat-val { font-family: 'JetBrains Mono', monospace; }
-.font-test-3  .bat-stat-val { font-family: 'Fira Code', monospace; }
-.font-test-4  .bat-stat-val { font-family: 'Source Code Pro', monospace; }
-.font-test-5  .bat-stat-val { font-family: 'Roboto Mono', monospace; }
-.font-test-6  .bat-stat-val { font-family: 'Inconsolata', monospace; }
-.font-test-7  .bat-stat-val { font-family: 'Space Mono', monospace; }
-.font-test-8  .bat-stat-val { font-family: 'Anonymous Pro', monospace; }
-.font-test-9  .bat-stat-val { font-family: 'Noto Sans Mono', monospace; }
-.font-test-10 .bat-stat-val { font-family: 'Ubuntu Mono', monospace; }
-.font-test-11 .bat-stat-val { font-family: 'Share Tech Mono', monospace; }
-.font-test-12 .bat-stat-val { font-family: 'Courier Prime', monospace; }
-.font-test-13 .bat-stat-val { font-family: 'PT Mono', monospace; }
-.font-test-14 .bat-stat-val { font-family: 'Azeret Mono', monospace; }
-.font-test-15 .bat-stat-val { font-family: 'Chivo Mono', monospace; }
+.bat-stat-val { font-size: 13px; font-family: 'Azeret Mono', monospace; color: var(--text); }
 .bat-loading { display: flex; align-items: center; padding: 0 12px; }
 
 /* STANDINGS */
@@ -428,7 +408,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   margin-right: 3px;
   position: relative;
   cursor: default;
@@ -460,8 +440,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   padding: 8px 14px;
   background: var(--bg3);
 }
-.tip-date { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
-.tip-score { font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); flex: 1; text-align: center; }
+.tip-date { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; }
+.tip-score { font-size: 13px; font-weight: 600; font-family: 'Azeret Mono', monospace; color: var(--text); flex: 1; text-align: center; }
 .tip-result { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
 .tip-result-w { background: rgba(76,175,130,.2); color: var(--green); }
 .tip-result-l { background: rgba(224,82,82,.15); color: var(--red); }
@@ -481,7 +461,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .st-th {
   font-size: 10px;
   font-weight: 600;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   text-align: center;
   padding: 7px 10px;
@@ -494,12 +474,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .st-tr { transition: background .12s; }
 .st-tr:hover { background: var(--bg3); }
 .st-tr:not(:last-child) td { border-bottom: 1px solid rgba(37,43,56,.5); }
-.st-td { text-align: center; padding: 8px 10px; font-family: 'DM Mono', monospace; color: var(--text); white-space: nowrap; }
+.st-td { text-align: center; padding: 8px 10px; font-family: 'Azeret Mono', monospace; color: var(--text); white-space: nowrap; }
 .st-td.td-team { text-align: left; font-family: 'Sora', sans-serif; font-weight: 500; font-size: 13px; padding-left: 16px; }
-.st-td.td-team span { font-size: 10px; color: var(--text3); margin-left: 6px; font-weight: 400; font-family: 'DM Mono', monospace; }
-.st-rank { font-size: 10px; color: var(--text3); margin-right: 8px; font-family: 'DM Mono', monospace; }
-.st-rank-td { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-align: center; width: 28px; }
-.st-div { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; white-space: nowrap; }
+.st-td.td-team span { font-size: 10px; color: var(--text3); margin-left: 6px; font-weight: 400; font-family: 'Azeret Mono', monospace; }
+.st-rank { font-size: 10px; color: var(--text3); margin-right: 8px; font-family: 'Azeret Mono', monospace; }
+.st-rank-td { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; text-align: center; width: 28px; }
+.st-div { font-size: 10px; color: var(--text3); font-family: 'Azeret Mono', monospace; white-space: nowrap; }
 .pct-col { font-weight: 600; color: var(--accent); }
 .streak-w { color: var(--green); font-weight: 600; }
 .streak-l { color: var(--red); }
@@ -639,9 +619,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .vs-stat-block { display: flex; flex-direction: column; align-items: center; }
 .vs-stat-lbl { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 4px; }
-.vs-stat-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+.vs-stat-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'Azeret Mono', monospace; }
 .vs-stat-val.avg-val { color: var(--accent); }
-.vs-ab-count { font-size: 11px; color: var(--text3); margin-left: auto; font-family: 'DM Mono', monospace; }
+.vs-ab-count { font-size: 11px; color: var(--text3); margin-left: auto; font-family: 'Azeret Mono', monospace; }
 /* AB log */
 .ab-log { border-top: 1px solid var(--border); }
 .ab-log-header {
@@ -664,8 +644,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .ab-row:last-child { border-bottom: none; }
 .ab-row:hover { background: var(--bg3); }
-.ab-date { font-family: 'DM Mono', monospace; color: var(--text3); min-width: 55px; font-size: 11px; }
-.ab-season { font-family: 'DM Mono', monospace; color: var(--text3); min-width: 36px; font-size: 11px; }
+.ab-date { font-family: 'Azeret Mono', monospace; color: var(--text3); min-width: 55px; font-size: 11px; }
+.ab-season { font-family: 'Azeret Mono', monospace; color: var(--text3); min-width: 36px; font-size: 11px; }
 .ab-result { font-weight: 600; flex: 1; }
 .ab-result.hit { color: var(--green); }
 .ab-result.out { color: var(--text2); }
@@ -704,7 +684,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 
 .ip-rank {
   font-size: 10px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   width: 16px;
   text-align: right;
@@ -720,7 +700,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .ip-val {
   font-size: 12px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Azeret Mono', monospace;
   color: var(--accent);
   font-weight: 500;
   flex-shrink: 0;
@@ -1209,7 +1189,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   padding: 3px 4px;
 }
 .gl-split-lbl { font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 2px; }
-.gl-split-val { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); }
+.gl-split-val { font-size: 13px; font-family: 'Azeret Mono', monospace; color: var(--text); }
 .gl-split-empty { padding: 6px 14px; font-size: 11px; color: var(--text3); }
 </style>
 </head>
@@ -1834,17 +1814,13 @@ function renderBatRoster(roster) {
   roster.forEach(p => loadBatterStats(p.id, p.name));
 }
 
-const FONT_TEST_NAMES = ['','IBM Plex Mono','JetBrains Mono','Fira Code','Source Code Pro','Roboto Mono','Inconsolata','Space Mono','Anonymous Pro','Noto Sans Mono','Ubuntu Mono','Share Tech Mono','Courier Prime','PT Mono','Azeret Mono','Chivo Mono'];
-
 function batterHTML(p, rank) {
   const handLabel = p.bat === 'L' ? 'Z' : p.bat === 'S' ? 'A' : 'D';
-  const fontClass = rank <= 15 ? ` font-test-${rank}` : '';
-  const fontBadge = rank <= 15 ? `<span style="font-size:9px;font-family:monospace;color:var(--accent);background:rgba(200,168,75,.12);border:1px solid rgba(200,168,75,.25);border-radius:3px;padding:1px 5px;margin-left:6px;letter-spacing:.3px">#${rank} ${FONT_TEST_NAMES[rank]}</span>` : '';
-  return `<div class="bat-row-wrap${fontClass}" id="bat-wrap-${p.id}">
+  return `<div class="bat-row-wrap" id="bat-wrap-${p.id}">
     <div class="bat-row" id="bat-row-${p.id}" onclick="toggleGameLog(${p.id}, '${escName(p.name)}')" style="cursor:pointer">
       <div class="bat-info">
         <span class="bat-rank">${rank}</span>
-        <span class="bat-name" id="bat-name-${p.id}">${p.name}</span>${fontBadge}
+        <span class="bat-name" id="bat-name-${p.id}">${p.name}</span>
         <span class="hand-tag hand-${p.bat}" id="bat-hand-${p.id}">${handLabel}</span>
         <span class="bat-pos">${p.pos}</span>
       </div>
@@ -2386,7 +2362,7 @@ function vsPitcherSearch(q) {
   results.innerHTML = matches.map(p =>
     `<div class="vs-search-result-item" onclick="vsSelectPitcher(${p.id}, '${p.name.replace(/'/g,"\\'")}', ${p.teamId || 0})">
       <span>${p.name}</span>
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${p.team}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:'Azeret Mono',monospace">${p.team}</span>
     </div>`
   ).join('');
   results.style.display = 'block';
