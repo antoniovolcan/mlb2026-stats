@@ -1140,6 +1140,56 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .vs-search-result-item:last-child { border-bottom: none; }
 .vs-search-result-item:hover { background: var(--bg4); color: var(--accent); }
+
+/* ===================== */
+/* GAME HAND SPLIT       */
+/* ===================== */
+.gl-row-expandable { cursor: pointer; }
+.gl-row-expandable:hover { background: var(--bg4) !important; }
+.gl-expand-btn {
+  font-size: 11px;
+  color: var(--accent);
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 0 4px;
+  user-select: none;
+}
+.gl-game-wrap { border-bottom: 1px solid rgba(37,43,56,.5); }
+.gl-game-wrap:last-child { border-bottom: none; }
+.gl-game-wrap .gl-row { border-bottom: none; }
+.gl-split-panel {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.gl-split-container {
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gl-split-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gl-split-stats {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+}
+.gl-split-stats::-webkit-scrollbar { display: none; }
+.gl-split-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+  padding: 3px 4px;
+}
+.gl-split-lbl { font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; margin-bottom: 2px; }
+.gl-split-val { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); }
+.gl-split-empty { padding: 6px 14px; font-size: 11px; color: var(--text3); }
 </style>
 </head>
 <body>
@@ -1901,26 +1951,26 @@ function renderGameLog(pid, games) {
   const panel = document.getElementById('gl-' + pid);
   if (!games.length) { panel.innerHTML = `<div class="gl-empty">Sin juegos registrados.</div>`; return; }
 
-  // Header row — mirrors exact bat-row structure
   const headerStats = BAT_INLINE.map(s =>
     `<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600">${s.l}</span></span>`
   ).join('');
   const headerRow = `<div class="gl-row gl-header-row">
-    <div class="bat-info" style="border-right:1px solid var(--border)"></div>
+    <div class="bat-info" style="border-right:1px solid var(--border)"><span style="font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;padding-left:4px">Toca para desglose ▾</span></div>
     <div class="bat-stats">${headerStats}</div>
   </div>`;
 
-  const rows = games.map(g => {
+  const rows = games.map((g, idx) => {
     const s = g.stat || {};
     const date = (g.date || '').slice(5);
-    const isHome = g.isHome;
     const oppId = g.opponent?.id;
     const oppAbbr = TEAM_ABBR[oppId] || g.opponent?.abbreviation || '?';
-    const vsLabel = (isHome ? 'vs ' : '@ ') + oppAbbr;
+    const vsLabel = (g.isHome ? 'vs ' : '@ ') + oppAbbr;
     const score = g.team?.score != null && g.opponent?.score != null
       ? `${g.team.score}-${g.opponent.score}` : '—';
     const won = g.team?.score != null && g.opponent?.score != null && g.team.score > g.opponent.score;
     const resultClass = won ? 'gl-win' : 'gl-loss';
+    const gamePk = g.game?.gamePk || g.gamePk || null;
+    const splitId = `${pid}_${idx}`;
 
     const statCells = BAT_INLINE.map(st => {
       const v = s[st.k];
@@ -1929,18 +1979,120 @@ function renderGameLog(pid, games) {
       return `<span class="bat-stat"><span class="bat-stat-val">${disp}</span></span>`;
     }).join('');
 
-    return `<div class="gl-row">
-      <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
-        <span class="gl-date">${date}</span>
-        <span class="gl-opp">${vsLabel}</span>
-        <span class="gl-score ${resultClass}">${score}</span>
+    return `<div class="gl-game-wrap" id="glwrap-${splitId}">
+      <div class="gl-row gl-row-expandable" onclick="toggleGameSplit('${splitId}', ${pid}, ${gamePk || 'null'})">
+        <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
+          <span class="gl-date">${date}</span>
+          <span class="gl-opp">${vsLabel}</span>
+          <span class="gl-score ${resultClass}">${score}</span>
+          <span class="gl-expand-btn" id="gl-xbtn-${splitId}">▾</span>
+        </div>
+        <div class="bat-stats">${statCells}</div>
       </div>
-      <div class="bat-stats">${statCells}</div>
+      <div class="gl-split-panel" id="gl-split-${splitId}" style="display:none"></div>
     </div>`;
   }).join('');
 
   panel.innerHTML = headerRow + rows;
 }
+
+// ── GAME HAND SPLIT ──
+const gameSplitCache = {};
+const openGameSplits = {};
+
+async function toggleGameSplit(splitId, batterId, gamePk) {
+  const panel = document.getElementById('gl-split-' + splitId);
+  const btn   = document.getElementById('gl-xbtn-' + splitId);
+  if (!panel) return;
+
+  if (openGameSplits[splitId]) {
+    panel.style.display = 'none';
+    openGameSplits[splitId] = false;
+    if (btn) btn.textContent = '▾';
+    return;
+  }
+  panel.style.display = 'block';
+  openGameSplits[splitId] = true;
+  if (btn) btn.textContent = '▴';
+
+  if (gameSplitCache[splitId]) { renderGameSplit(splitId, gameSplitCache[splitId]); return; }
+  if (!gamePk) { panel.innerHTML = `<div class="gl-split-empty">ID de juego no disponible.</div>`; return; }
+
+  panel.innerHTML = `<div class="loading-msg" style="padding:.4rem 1rem;font-size:11px"><div class="spinner" style="width:10px;height:10px;border-width:1.5px"></div>Cargando desglose por mano...</div>`;
+
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/playByPlay`);
+    const d   = await res.json();
+    const splits = parseGameHandSplit(d.allPlays || [], parseInt(batterId));
+    gameSplitCache[splitId] = splits;
+    renderGameSplit(splitId, splits);
+  } catch(e) {
+    panel.innerHTML = `<div class="gl-split-empty" style="color:var(--red)">⚠ ${e.message}</div>`;
+  }
+}
+
+function parseGameHandSplit(allPlays, batterId) {
+  const sp = {
+    R: { ab:0, h:0, hr:0, bb:0, so:0, rbi:0 },
+    L: { ab:0, h:0, hr:0, bb:0, so:0, rbi:0 }
+  };
+  allPlays.forEach(play => {
+    if (play.matchup?.batter?.id !== batterId) return;
+    if (!play.about?.isComplete) return;
+    const hand  = play.matchup?.pitchHand?.code === 'L' ? 'L' : 'R';
+    const et    = (play.result?.eventType || '').toLowerCase();
+    const rbi   = play.result?.rbi || 0;
+    const isHit = ['single','double','triple','home_run'].includes(et);
+    const isHR  = et === 'home_run';
+    const isBB  = ['walk','intent_walk'].includes(et);
+    const isSO  = et === 'strikeout';
+    const noAB  = ['walk','intent_walk','hit_by_pitch','sac_fly','sac_bunt','catcher_interf'].includes(et);
+    const g = sp[hand];
+    if (!noAB) g.ab++;
+    if (isHit) g.h++;
+    if (isHR)  g.hr++;
+    if (isBB)  g.bb++;
+    if (isSO)  g.so++;
+    g.rbi += rbi;
+  });
+  ['R','L'].forEach(h => {
+    const g = sp[h];
+    g.avg = g.ab > 0 ? (g.h / g.ab).toFixed(3) : '—';
+  });
+  return sp;
+}
+
+function renderGameSplit(splitId, sp) {
+  const panel = document.getElementById('gl-split-' + splitId);
+  if (!panel) return;
+  const sides = [
+    { k:'R', cls:'hand-R', lbl:'vs Derechos', tag:'D' },
+    { k:'L', cls:'hand-L', lbl:'vs Zurdos',   tag:'Z' }
+  ];
+  const cols = [
+    ['AB','ab'],['H','h'],['HR','hr'],['BB','bb'],['SO','so'],['RBI','rbi'],['AVG','avg']
+  ];
+  const rows = sides.map(side => {
+    const g = sp[side.k];
+    const isEmpty = g.ab === 0 && g.bb === 0;
+    if (isEmpty) return `<div class="gl-split-row">
+      <span class="hand-tag ${side.cls}" style="font-size:9px;flex-shrink:0">${side.tag}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:8px">Sin turnos al bate</span>
+    </div>`;
+    return `<div class="gl-split-row">
+      <span class="hand-tag ${side.cls}" style="font-size:9px;flex-shrink:0">${side.tag}</span>
+      <div class="gl-split-stats">
+        ${cols.map(([l,k]) => `<span class="gl-split-stat">
+          <span class="gl-split-lbl">${l}</span>
+          <span class="gl-split-val">${g[k]}</span>
+        </span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  panel.innerHTML = `<div class="gl-split-container">${rows}</div>`;
+}
+
+
 
 function setBatSplit(s, btn) {
   currentBatSplit = s;
