@@ -446,10 +446,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .tip-result-w { background: rgba(76,175,130,.2); color: var(--green); }
 .tip-result-l { background: rgba(224,82,82,.15); color: var(--red); }
 
-/* Logo outline for dark logos */
+/* Logo outline for dark logos — crisp 1px white border following shape */
 .st-team-logo {
   width: 32px; height: 32px; object-fit: contain; display: block; margin: auto;
-  filter: drop-shadow(0 0 2px rgba(255,255,255,.55)) drop-shadow(0 0 1px rgba(255,255,255,.4));
+  filter:
+    drop-shadow(-1px -1px 0 rgba(255,255,255,.7))
+    drop-shadow( 1px -1px 0 rgba(255,255,255,.7))
+    drop-shadow(-1px  1px 0 rgba(255,255,255,.7))
+    drop-shadow( 1px  1px 0 rgba(255,255,255,.7));
+}
+.vs-logo-outlined {
+  filter:
+    drop-shadow(-1px -1px 0 rgba(255,255,255,.7))
+    drop-shadow( 1px -1px 0 rgba(255,255,255,.7))
+    drop-shadow(-1px  1px 0 rgba(255,255,255,.7))
+    drop-shadow( 1px  1px 0 rgba(255,255,255,.7));
 }
 /* Stat description tooltips */
 [data-stat-tip] { position: relative; cursor: help; }
@@ -497,29 +508,29 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   border-bottom: 1px solid var(--border);
   background: var(--bg3);
 }
-.st-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.st-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .st-th {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   font-family: 'Azeret Mono', monospace;
   color: var(--text3);
   text-align: center;
-  padding: 7px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   letter-spacing: .4px;
   white-space: nowrap;
   background: var(--bg3);
 }
-.st-th.th-team { text-align: left; min-width: 180px; }
+.st-th.th-team { text-align: left; min-width: 190px; }
 .st-tr { transition: background .12s; }
 .st-tr:hover { background: var(--bg3); }
 .st-tr:not(:last-child) td { border-bottom: 1px solid rgba(37,43,56,.5); }
-.st-td { text-align: center; padding: 8px 10px; font-family: 'Azeret Mono', monospace; color: var(--text); white-space: nowrap; }
-.st-td.td-team { text-align: left; font-family: 'Sora', sans-serif; font-weight: 500; font-size: 13px; padding-left: 16px; }
-.st-td.td-team span { font-size: 10px; color: var(--text3); margin-left: 6px; font-weight: 400; font-family: 'Azeret Mono', monospace; }
-.st-rank { font-size: 10px; color: var(--text3); margin-right: 8px; font-family: 'Azeret Mono', monospace; }
-.st-rank-td { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; text-align: center; width: 28px; }
-.st-div { font-size: 10px; color: var(--text3); font-family: 'Azeret Mono', monospace; white-space: nowrap; }
+.st-td { text-align: center; padding: 10px 12px; font-family: 'Azeret Mono', monospace; color: var(--text); white-space: nowrap; font-size: 14px; }
+.st-td.td-team { text-align: left; font-family: 'Sora', sans-serif; font-weight: 500; font-size: 15px; padding-left: 16px; }
+.st-td.td-team span { font-size: 11px; color: var(--text3); margin-left: 6px; font-weight: 400; font-family: 'Azeret Mono', monospace; }
+.st-rank { font-size: 11px; color: var(--text3); margin-right: 8px; font-family: 'Azeret Mono', monospace; }
+.st-rank-td { font-size: 12px; color: var(--text3); font-family: 'Azeret Mono', monospace; text-align: center; width: 28px; }
+.st-div { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; white-space: nowrap; }
 .pct-col { font-weight: 600; color: var(--accent); }
 .streak-w { color: var(--green); font-weight: 600; }
 .streak-l { color: var(--red); }
@@ -618,7 +629,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   letter-spacing: 3px;
   color: var(--accent);
   flex-shrink: 0;
-  padding-top: 60px;
+  display: flex;
+  align-items: center;
 }
 /* VS Result */
 .vs-card {
@@ -1699,11 +1711,6 @@ function renderPitcherLog(pid, games) {
     const oppAbbr = TEAM_ABBR[oppId] || g.opponent?.abbreviation || '?';
     const vsLabel = (isHome ? 'vs ' : '@ ') + oppAbbr;
     // Pitcher gamelog: score may be in stat or team fields
-    const teamScore = g.team?.score ?? g.stat?.runs ?? null;
-    const oppScore = g.opponent?.score ?? null;
-    const score = teamScore != null && oppScore != null ? `${teamScore}-${oppScore}` : '—';
-    const won = teamScore != null && oppScore != null && teamScore > oppScore;
-    const resultCls = won ? 'gl-win' : 'gl-loss';
     const statCells = PITCH_INLINE.map(st => {
       const v = s[st.k];
       const disp = (v === undefined || v === null || v === '') ? '—'
@@ -1714,7 +1721,6 @@ function renderPitcherLog(pid, games) {
       <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
         <span class="gl-date">${date}</span>
         <span class="gl-opp">${vsLabel}</span>
-        <span class="gl-score ${resultCls}">${score}</span>
       </div>
       <div class="bat-stats">${statCells}</div>
     </div>`;
@@ -1985,10 +1991,6 @@ function renderGameLog(pid, games) {
     const oppId = g.opponent?.id;
     const oppAbbr = TEAM_ABBR[oppId] || g.opponent?.abbreviation || '?';
     const vsLabel = (g.isHome ? 'vs ' : '@ ') + oppAbbr;
-    const score = g.team?.score != null && g.opponent?.score != null
-      ? `${g.team.score}-${g.opponent.score}` : '—';
-    const won = g.team?.score != null && g.opponent?.score != null && g.team.score > g.opponent.score;
-    const resultClass = won ? 'gl-win' : 'gl-loss';
     const gamePk = g.game?.gamePk || g.gamePk || null;
     const splitId = `${pid}_${idx}`;
 
@@ -2004,7 +2006,6 @@ function renderGameLog(pid, games) {
         <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
           <span class="gl-date">${date}</span>
           <span class="gl-opp">${vsLabel}</span>
-          <span class="gl-score ${resultClass}">${score}</span>
           <span class="gl-expand-btn" id="gl-xbtn-${splitId}">▾</span>
         </div>
         <div class="bat-stats">${statCells}</div>
@@ -2466,12 +2467,11 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
     return `<tr class="st-tr" style="${b.ab===0?'opacity:.45':''}">
       <td class="st-td" style="text-align:left;padding-left:12px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;min-width:160px">${i+1}. ${b.name}</td>
       <td class="st-td"><span class="hand-tag ${hc}">${hl}</span></td>
-      <td class="st-td" style="color:var(--text3);font-size:11px">${b.pos}</td>
       <td class="st-td wl-bold">${b.ab||'—'}</td>
       <td class="st-td">${b.h}</td><td class="st-td">${b.hr}</td>
       <td class="st-td">${b.bb}</td><td class="st-td">${b.so}</td>
       <td class="st-td ${avgCls}" style="font-weight:600">${b.avg}</td>
-      <td class="st-td">${b.obp}</td><td class="st-td">${b.ops}</td>
+      <td class="st-td">${b.ops}</td>
     </tr>`;
   }).join('');
 
@@ -2479,7 +2479,7 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
     <div class="vs-card-header" style="flex-direction:column;gap:16px;padding:20px">
       <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <img style="width:90px;height:90px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2)"
+          <img class="vs-logo-outlined" style="width:90px;height:90px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2)"
                src="${pitPhoto}" onerror="this.src='https://www.mlbstatic.com/team-logos/${pit.currentTeam?.id}.svg'">
           <div style="text-align:center">
             <div class="vs-player-name">${pit.fullName||'—'}</div>
@@ -2488,7 +2488,7 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
         </div>
         <span class="vs-x" style="font-size:28px">VS</span>
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <img style="width:90px;height:90px;object-fit:contain" src="${oppLogo}" onerror="this.style.display='none'">
+          <img class="vs-logo-outlined" style="width:90px;height:90px;object-fit:contain" src="${oppLogo}" onerror="this.style.display='none'">
           <div style="text-align:center">
             <div class="vs-player-name">${oppTeam?.name||'—'}</div>
             <div class="vs-player-team">Top ${sorted.length} bateadores 2026</div>
@@ -2500,10 +2500,10 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
       <table class="st-table" style="min-width:680px">
         <thead><tr>
           <th class="st-th" style="text-align:left;padding-left:12px;min-width:160px">Bateador</th>
-          <th class="st-th">Mano</th><th class="st-th">POS</th>
+          <th class="st-th">Mano</th>
           <th class="st-th">AB</th><th class="st-th">H</th><th class="st-th">HR</th>
           <th class="st-th">BB</th><th class="st-th">SO</th>
-          <th class="st-th">AVG</th><th class="st-th">OBP</th><th class="st-th">OPS</th>
+          <th class="st-th">AVG</th><th class="st-th">OPS</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
