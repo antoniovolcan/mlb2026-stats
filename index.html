@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MLB 2026 — Stats Personales</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&family=Source+Code+Pro:wght@400;500&family=Roboto+Mono:wght@400;500&family=Inconsolata:wght@400;500&family=Space+Mono:wght@400&family=Anonymous+Pro:wght@400&family=Noto+Sans+Mono:wght@400;500&family=Ubuntu+Mono&family=Share+Tech+Mono&family=Courier+Prime:wght@400&family=PT+Mono&family=Azeret+Mono:wght@400;500&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&family=Source+Code+Pro:wght@400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&family=Space+Mono&family=Anonymous+Pro&family=Noto+Sans+Mono:wght@400;500&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Courier+Prime&family=PT+Mono&family=Azeret+Mono:wght@400;500&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0c0f;
@@ -1830,14 +1834,17 @@ function renderBatRoster(roster) {
   roster.forEach(p => loadBatterStats(p.id, p.name));
 }
 
+const FONT_TEST_NAMES = ['','IBM Plex Mono','JetBrains Mono','Fira Code','Source Code Pro','Roboto Mono','Inconsolata','Space Mono','Anonymous Pro','Noto Sans Mono','Ubuntu Mono','Share Tech Mono','Courier Prime','PT Mono','Azeret Mono','Chivo Mono'];
+
 function batterHTML(p, rank) {
   const handLabel = p.bat === 'L' ? 'Z' : p.bat === 'S' ? 'A' : 'D';
   const fontClass = rank <= 15 ? ` font-test-${rank}` : '';
+  const fontBadge = rank <= 15 ? `<span style="font-size:9px;font-family:monospace;color:var(--accent);background:rgba(200,168,75,.12);border:1px solid rgba(200,168,75,.25);border-radius:3px;padding:1px 5px;margin-left:6px;letter-spacing:.3px">#${rank} ${FONT_TEST_NAMES[rank]}</span>` : '';
   return `<div class="bat-row-wrap${fontClass}" id="bat-wrap-${p.id}">
     <div class="bat-row" id="bat-row-${p.id}" onclick="toggleGameLog(${p.id}, '${escName(p.name)}')" style="cursor:pointer">
       <div class="bat-info">
         <span class="bat-rank">${rank}</span>
-        <span class="bat-name" id="bat-name-${p.id}">${p.name}</span>
+        <span class="bat-name" id="bat-name-${p.id}">${p.name}</span>${fontBadge}
         <span class="hand-tag hand-${p.bat}" id="bat-hand-${p.id}">${handLabel}</span>
         <span class="bat-pos">${p.pos}</span>
       </div>
