@@ -1066,6 +1066,33 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   #roster-area::-webkit-scrollbar,
   #bat-roster-area::-webkit-scrollbar { display: none; }
 }
+
+/* ===================== */
+/* BAT TEAM SELECTOR     */
+/* ===================== */
+.bat-team-selector-wrap {
+  margin-bottom: 1.25rem;
+}
+.bat-team-select {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 36px 10px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Sora', sans-serif;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color .15s;
+}
+.bat-team-select:focus { border-color: var(--accent); }
+.bat-team-select option { background: var(--bg2); color: var(--text); }
 </style>
 </head>
 <body>
@@ -1105,10 +1132,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
       </div>
     </div>
 
-    <div class="team-tab-bar">
-      <div id="bat-team-pills" class="desktop-pills"></div>
-      <select class="mobile-team-dropdown" id="bat-team-select-mobile" onchange="if(this.value) selectBatTeam(parseInt(this.value))">
-        <option value="">— Selecciona equipo —</option>
+    <div class="bat-team-selector-wrap">
+      <select class="bat-team-select" id="bat-team-select" onchange="handleBatTeamChange(this.value)">
+        <option value="all">⚾ TODOS — MLB</option>
       </select>
     </div>
 
@@ -1235,6 +1261,7 @@ function showSection(name) {
   document.getElementById('sec-' + name).classList.add('active');
   event.target.classList.add('active');
   if (name === 'equipos') loadStandings();
+  if (name === 'bateadores' && !batRosterCache['all']) selectAllBatters();
 }
 
 // TEAM PILLS
@@ -1572,55 +1599,76 @@ selectTeam(MLB_TEAMS[0].id);
 // =====================
 // BATEADORES
 // =====================
-let currentBatTeamId = null;
+let currentBatTeamId = 'all';
 let currentBatSplit = 'general';
 let batRosterCache = {};
 let batStatsCache = {};
 
-const BAT_STAT_KEYS = ['avg','obp','slg','ops','atBats','runs','baseOnBalls','strikeOuts','hits','doubles','triples','homeRuns','rbi','plateAppearances'];
-const BAT_STAT_LABELS = ['AVG','OBP','SLG','OPS','AB','R','BB','SO','H','2B','3B','HR','RBI','PA'];
-
-function renderBatPills(list) {
-  document.getElementById('bat-team-pills').innerHTML = list.map(t =>
-    `<button class="team-pill${currentBatTeamId === t.id ? ' active' : ''}" id="bat-pill-${t.id}" onclick="selectBatTeam(${t.id})">${t.name}</button>`
-  ).join('');
-  const sel = document.getElementById('bat-team-select-mobile');
-  if (sel) {
-    sel.innerHTML = '<option value="">— Selecciona equipo —</option>' +
-      list.map(t => `<option value="${t.id}"${currentBatTeamId === t.id ? ' selected' : ''} data-abbr="${t.abbr}">${t.name}</option>`).join('');
-  }
+function initBatTeamSelect() {
+  const sel = document.getElementById('bat-team-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="all">⚾ TODOS — MLB</option>' +
+    MLB_TEAMS.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 }
-renderBatPills(MLB_TEAMS);
+initBatTeamSelect();
 
-async function selectBatTeam(id) {
-  currentBatTeamId = id;
-  renderBatPills(MLB_TEAMS);
+function handleBatTeamChange(val) {
+  if (val === 'all') selectAllBatters();
+  else selectBatTeam(parseInt(val));
+}
+
+async function selectAllBatters() {
+  currentBatTeamId = 'all';
   const psInput = document.getElementById('bat-player-search');
   if (psInput) { psInput.value = ''; filterBatters(''); }
-  openGameLogs = {};
-  gameLogCache = {};
+  openGameLogs = {}; gameLogCache = {};
   const area = document.getElementById('bat-roster-area');
-  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando bateadores...</div>`;
-
+  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando todos los bateadores de la MLB...</div>`;
   try {
-    if (!batRosterCache[id]) {
-      const statsRes = await fetch(`https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2026&sportId=1&stats=season&group=hitting&gameType=R&limit=1000000&offset=0&sortStat=plateAppearances&order=desc&teamId=${id}`);
-      const statsData = await statsRes.json();
-      const rawStats = statsData.stats || [];
-      const batters = rawStats
-        .filter(s => s.playerId && s.plateAppearances > 0)
+    if (!batRosterCache['all']) {
+      const res = await fetch(`https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2026&sportId=1&stats=season&group=hitting&gameType=R&limit=1000000&offset=0&sortStat=atBats&order=desc`);
+      const d = await res.json();
+      batRosterCache['all'] = (d.stats || [])
+        .filter(s => s.playerId && (s.atBats || 0) > 0)
         .map(s => ({
           id: s.playerId,
           name: (s.playerFirstName || '') + ' ' + (s.playerLastName || ''),
           pos: s.primaryPositionAbbrev || '—',
-          pa: s.plateAppearances || 0,
+          ab: s.atBats || 0,
           bat: '?'
-        }))
-        .sort((a, b) => b.pa - a.pa);
-      batRosterCache[id] = batters;
+        }));
+    }
+    renderBatRoster(batRosterCache['all']);
+  } catch(e) {
+    area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+async function selectBatTeam(id) {
+  currentBatTeamId = id;
+  const sel = document.getElementById('bat-team-select');
+  if (sel) sel.value = id;
+  const psInput = document.getElementById('bat-player-search');
+  if (psInput) { psInput.value = ''; filterBatters(''); }
+  openGameLogs = {}; gameLogCache = {};
+  const area = document.getElementById('bat-roster-area');
+  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando bateadores...</div>`;
+  try {
+    if (!batRosterCache[id]) {
+      const res = await fetch(`https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2026&sportId=1&stats=season&group=hitting&gameType=R&limit=1000000&offset=0&sortStat=atBats&order=desc&teamId=${id}`);
+      const d = await res.json();
+      batRosterCache[id] = (d.stats || [])
+        .filter(s => s.playerId && (s.atBats || 0) > 0)
+        .map(s => ({
+          id: s.playerId,
+          name: (s.playerFirstName || '') + ' ' + (s.playerLastName || ''),
+          pos: s.primaryPositionAbbrev || '—',
+          ab: s.atBats || 0,
+          bat: '?'
+        }));
     }
     renderBatRoster(batRosterCache[id]);
-  } catch (e) {
+  } catch(e) {
     area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
   }
 }
@@ -1704,26 +1752,26 @@ function updateBatterHand(pid, bat) {
   if (!tag) return;
   tag.className = `hand-tag hand-${bat}`;
   tag.textContent = bat === 'L' ? 'Z' : bat === 'S' ? 'A' : 'D';
-  if (batRosterCache[currentBatTeamId]) {
-    const p = batRosterCache[currentBatTeamId].find(x => x.id === pid);
+  const cKey = currentBatTeamId || 'all';
+  if (batRosterCache[cKey]) {
+    const p = batRosterCache[cKey].find(x => x.id === pid);
     if (p) p.bat = bat;
   }
 }
 
 // Stat order: PA AB H BB SO RBI AVG | OBP SLG OPS 2B 3B HR R
 const BAT_INLINE = [
-  {k:'plateAppearances', l:'PA'},
-  {k:'atBats',           l:'AB'},
-  {k:'hits',             l:'H'},
-  {k:'homeRuns',         l:'HR'},
-  {k:'runs',             l:'R'},
-  {k:'baseOnBalls',      l:'BB'},
-  {k:'strikeOuts',       l:'SO'},
-  {k:'rbi',              l:'RBI'},
-  {k:'avg',              l:'AVG', dec:3},
-  {k:'obp',              l:'OBP', dec:3},
-  {k:'slg',              l:'SLG', dec:3},
-  {k:'ops',              l:'OPS', dec:3},
+  {k:'atBats',      l:'AB'},
+  {k:'hits',        l:'H'},
+  {k:'homeRuns',    l:'HR'},
+  {k:'strikeOuts',  l:'SO'},
+  {k:'baseOnBalls', l:'BB'},
+  {k:'runs',        l:'R'},
+  {k:'rbi',         l:'RBI'},
+  {k:'avg',         l:'AVG', dec:3},
+  {k:'obp',         l:'OBP', dec:3},
+  {k:'slg',         l:'SLG', dec:3},
+  {k:'ops',         l:'OPS', dec:3},
 ];
 
 function buildBatTable(data) {
@@ -1825,7 +1873,8 @@ function setBatSplit(s, btn) {
   btn.closest('.split-bar').querySelectorAll('.split-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   batStatsCache = {};
-  if (currentBatTeamId) renderBatRoster(batRosterCache[currentBatTeamId] || []);
+  const cacheKey = currentBatTeamId || 'all';
+  renderBatRoster(batRosterCache[cacheKey] || []);
 }
 
 function filterBatters(q) {
