@@ -345,8 +345,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .gl-date { font-size: 12px; color: var(--text2); flex-shrink: 0; font-family: 'Azeret Mono', monospace; }
 .gl-opp { font-size: 12px; color: var(--text); font-weight: 500; flex-shrink: 0; }
 .gl-score { font-size: 12px; font-family: 'Azeret Mono', monospace; font-weight: 600; flex-shrink: 0; }
-.gl-win { color: var(--green); }
-.gl-loss { color: var(--red); }
+.gl-win { color: var(--text2); }
+.gl-loss { color: var(--text2); }
 .gl-empty { padding: .75rem 1rem; font-size: 12px; color: var(--text3); }
 
 /* BATTER ROWS */
@@ -403,17 +403,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  font-size: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 14px;
   font-weight: 700;
   font-family: 'Azeret Mono', monospace;
   margin-right: 3px;
   position: relative;
   cursor: default;
 }
-.pill-w { background: var(--green); color: #0a0c0f; }
+.pill-w { background: var(--green); color: #fff; }
 .pill-l { background: var(--red); color: #fff; }
 /* tip handled by global-tip div */
 .tip-card { font-family: 'Sora', sans-serif; }
@@ -425,27 +425,67 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   border-bottom: 1px solid var(--border);
 }
 .tip-logo {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   flex-shrink: 0;
 }
-.tip-team-info { display: flex; flex-direction: column; gap: 2px; }
-.tip-vsAt { font-size: 10px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
-.tip-team-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.tip-team-info { display: flex; flex-direction: column; gap: 3px; }
+.tip-vsAt { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+.tip-team-name { font-size: 16px; font-weight: 600; color: var(--text); }
 .tip-bottom {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
+  gap: 12px;
+  padding: 10px 16px;
   background: var(--bg3);
 }
-.tip-date { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; }
-.tip-score { font-size: 13px; font-weight: 600; font-family: 'Azeret Mono', monospace; color: var(--text); flex: 1; text-align: center; }
-.tip-result { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.tip-date { font-size: 13px; color: var(--text3); font-family: 'Azeret Mono', monospace; }
+.tip-score { font-size: 16px; font-weight: 600; font-family: 'Azeret Mono', monospace; color: var(--text); flex: 1; text-align: center; }
+.tip-result { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 4px; }
 .tip-result-w { background: rgba(76,175,130,.2); color: var(--green); }
 .tip-result-l { background: rgba(224,82,82,.15); color: var(--red); }
 
+/* Logo outline for dark logos */
+.st-team-logo {
+  width: 32px; height: 32px; object-fit: contain; display: block; margin: auto;
+  filter: drop-shadow(0 0 2px rgba(255,255,255,.55)) drop-shadow(0 0 1px rgba(255,255,255,.4));
+}
+/* Stat description tooltips */
+[data-stat-tip] { position: relative; cursor: help; }
+[data-stat-tip]:hover::after {
+  content: attr(data-stat-tip);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-size: 11px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 400;
+  white-space: normal;
+  width: 170px;
+  text-align: center;
+  padding: 6px 10px;
+  pointer-events: none;
+  z-index: 9000;
+  box-shadow: 0 4px 16px rgba(0,0,0,.5);
+  line-height: 1.4;
+}
+[data-stat-tip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--border2);
+  pointer-events: none;
+  z-index: 9001;
+}
 .standings-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 .division-block { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; }
 .division-title {
@@ -486,7 +526,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .diff-pos { color: var(--green); }
 .diff-neg { color: var(--red); }
 .wl-bold { font-weight: 600; color: var(--text); }
-.st-tr.playoff-line td { border-bottom: 2px solid var(--accent) !important; }
 
 /* VERSUS */
 .vs-builder {
@@ -1223,11 +1262,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     <div class="section-header">
       <div class="section-title">Bateadores</div>
       <span class="live-badge">Temporada 2026</span>
-      <div class="split-bar">
-        <button class="split-btn active" onclick="setBatSplit('general', this)">General</button>
-        <button class="split-btn" onclick="setBatSplit('vsLeft', this)">vs Zurdos</button>
-        <button class="split-btn" onclick="setBatSplit('vsRight', this)">vs Derechos</button>
-      </div>
     </div>
 
     <div class="bat-team-selector-wrap">
@@ -1283,15 +1317,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
       <span class="live-badge">Histórico</span>
     </div>
     <div class="vs-builder">
-      <!-- PITCHER — buscador por nombre -->
       <div class="vs-side">
         <div class="vs-side-label">Pitcher</div>
-        <div class="vs-preview" id="vs-pit-preview">
-          <div class="vs-preview-empty">
-            <span class="vs-preview-icon">⚾</span>
-            <span class="vs-preview-hint">Busca un pitcher</span>
-          </div>
-        </div>
         <div class="vs-search-wrap">
           <input class="vs-pitcher-input" id="vs-pitcher-search" type="text"
                  placeholder="Buscar pitcher por nombre..."
@@ -1303,15 +1330,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 
       <div class="vs-divider">VS</div>
 
-      <!-- EQUIPO RIVAL -->
       <div class="vs-side">
         <div class="vs-side-label">Equipo rival</div>
-        <div class="vs-preview" id="vs-opp-preview">
-          <div class="vs-preview-empty">
-            <span class="vs-preview-icon">🏟️</span>
-            <span class="vs-preview-hint">Selecciona equipo rival</span>
-          </div>
-        </div>
         <select class="vs-select" id="vs-opp-team" onchange="vsOnOppTeamSelect()">
           <option value="">— Selecciona equipo rival —</option>
         </select>
@@ -1522,7 +1542,7 @@ function updatePitcherHand(pid, hand) {
   const tag = document.getElementById('phand-' + pid);
   if (tag) {
     tag.className = `hand-tag hand-${hand}`;
-    tag.textContent = hand === 'L' ? 'ZUR' : 'DER';
+    tag.textContent = hand === 'L' ? 'Z' : 'D';
   }
   const pKey = currentTeamId || 'all';
   if (rosterCache[pKey]) {
@@ -1805,8 +1825,8 @@ function renderBatRoster(roster) {
   } else {
     // Header row
     html += `<div class="bat-header-row">
-      <div class="bat-info"><span class="bat-rank">#</span><span class="bat-name">Jugador</span><span style="width:30px"></span><span class="bat-pos">POS</span></div>
-      <div class="bat-stats">${BAT_INLINE.map(s=>`<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600">${s.l}</span></span>`).join('')}</div>
+      <div class="bat-info"><span class="bat-rank">#</span><span class="bat-name">Jugador</span></div>
+      <div class="bat-stats">${BAT_INLINE.map(s=>`<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600"${s.tip ? ` data-stat-tip="${s.tip}"` : ''}>${s.l}</span></span>`).join('')}</div>
     </div>`;
     roster.forEach((p, i) => { html += batterHTML(p, i + 1); });
   }
@@ -1822,7 +1842,6 @@ function batterHTML(p, rank) {
         <span class="bat-rank">${rank}</span>
         <span class="bat-name" id="bat-name-${p.id}">${p.name}</span>
         <span class="hand-tag hand-${p.bat}" id="bat-hand-${p.id}">${handLabel}</span>
-        <span class="bat-pos">${p.pos}</span>
       </div>
       <div class="bat-stats" id="bat-sp-${p.id}">
         <span class="bat-loading"><div class="spinner" style="width:12px;height:12px;border-width:1.5px"></div></span>
@@ -1893,10 +1912,10 @@ const BAT_INLINE = [
   {k:'baseOnBalls', l:'BB'},
   {k:'runs',        l:'R'},
   {k:'rbi',         l:'RBI'},
-  {k:'avg',         l:'AVG', dec:3},
-  {k:'obp',         l:'OBP', dec:3},
-  {k:'slg',         l:'SLG', dec:3},
-  {k:'ops',         l:'OPS', dec:3},
+  {k:'avg',         l:'AVG', dec:3, tip:'Promedio de bateo. Más alto = mejor contacto. Élite: .300+'},
+  {k:'obp',         l:'OBP', dec:3, tip:'Qué tan seguido llega a base. Más alto = mejor. Élite: .380+'},
+  {k:'slg',         l:'SLG', dec:3, tip:'Potencia del bateador. Más alto = más poder. Élite: .500+'},
+  {k:'ops',         l:'OPS', dec:3, tip:'OBP + SLG combinados. Más alto = mejor bateador integral. Élite: .900+'},
 ];
 
 function buildBatTable(data) {
@@ -2076,10 +2095,7 @@ function renderGameSplit(splitId, sp) {
   const rows = sides.map(side => {
     const g = sp[side.k];
     const isEmpty = g.ab === 0 && g.bb === 0;
-    if (isEmpty) return `<div class="gl-split-row">
-      <span class="hand-tag ${side.cls}" style="font-size:9px;flex-shrink:0">${side.tag}</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:8px">Sin turnos al bate</span>
-    </div>`;
+    if (isEmpty) return '';
     return `<div class="gl-split-row">
       <span class="hand-tag ${side.cls}" style="font-size:9px;flex-shrink:0">${side.tag}</span>
       <div class="gl-split-stats">
@@ -2238,9 +2254,8 @@ function renderStandings(records, teamGames) {
     const streakClass = (t.streak||'').startsWith('W') ? 'streak-w' : 'streak-l';
 
     // Playoff cutoff lines: top 6 AL + top 6 NL make playoffs (3 div winners + 3 WC)
-    const playoffLine = i === 5 ? 'playoff-line' : '';
-    return `<tr class="st-tr ${playoffLine}">
-      <td class="st-td" style="padding:4px 8px;width:44px"><img src="https://www.mlbstatic.com/team-logos/${t.teamId}.svg" style="width:32px;height:32px;object-fit:contain;display:block;margin:auto" onerror="this.style.display='none'"></td>
+    return `<tr class="st-tr">
+      <td class="st-td" style="padding:4px 8px;width:44px"><img class="st-team-logo" src="https://www.mlbstatic.com/team-logos/${t.teamId}.svg" onerror="this.style.display='none'"></td>
       <td class="st-td td-team">${t.name}</td>
       <td class="st-td wl-bold">${t.w}</td>
       <td class="st-td wl-bold">${t.l}</td>
@@ -2381,28 +2396,12 @@ function vsSelectPitcher(id, name, teamId) {
   vsSelectedPitcherName = name;
   document.getElementById('vs-pitcher-search').value = name;
   document.getElementById('vs-pitcher-results').style.display = 'none';
-  const preview = document.getElementById('vs-pit-preview');
-  preview.innerHTML = `
-    <img style="width:100px;height:100px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);display:block;margin:0 auto 8px"
-         src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${id}/headshot/67/current"
-         onerror="this.style.opacity='.3'">
-    <span class="vs-preview-name">${name}</span>`;
   vsCheckReady();
 }
 
 function vsOnOppTeamSelect() {
   const teamId = document.getElementById('vs-opp-team').value;
-  const preview = document.getElementById('vs-opp-preview');
-  if (!teamId) {
-    preview.innerHTML = '<div class="vs-preview-empty"><span class="vs-preview-icon">🏟️</span><span class="vs-preview-hint">Selecciona equipo rival</span></div>';
-    document.getElementById('vs-result').innerHTML = '';
-    return;
-  }
-  const team = MLB_TEAMS.find(t => t.id == teamId);
-  preview.innerHTML = `<div class="vs-preview-logo-only" style="flex-direction:column;gap:8px">
-    <img class="preview-logo" style="width:110px;height:110px" src="https://www.mlbstatic.com/team-logos/${teamId}.svg" onerror="this.style.display='none'">
-    <span class="vs-preview-name" style="font-size:13px">${team?.name || ''}</span>
-  </div>`;
+  if (!teamId) { document.getElementById('vs-result').innerHTML = ''; return; }
   vsCheckReady();
 }
 
