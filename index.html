@@ -846,6 +846,124 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     padding: 6px 8px;
   }
 }
+
+/* ===================== */
+/* MOBILE UNIFIED TABLE  */
+/* ===================== */
+@media (max-width: 768px) {
+  /* Scroll container: roster areas (una sola unidad) */
+  #roster-area, #bat-roster-area {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #roster-area::-webkit-scrollbar,
+  #bat-roster-area::-webkit-scrollbar { display: none; }
+
+  /* Revertir columna → fila horizontal con ancho fijo */
+  .bat-row {
+    flex-direction: row !important;
+    min-width: 900px;
+  }
+  .bat-header-row {
+    display: flex !important;
+    min-width: 900px;
+    position: sticky;
+    top: 0;
+    z-index: 12;
+  }
+
+  /* Columna izquierda sticky */
+  .bat-info {
+    min-width: 150px !important;
+    max-width: 150px !important;
+    position: sticky !important;
+    left: 0;
+    z-index: 8;
+    background: var(--bg2);
+    flex-shrink: 0 !important;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: none !important;
+    width: 150px !important;
+    padding: 8px 8px !important;
+  }
+  .bat-header-row .bat-info { background: var(--bg3); z-index: 9; }
+  .bat-row:hover .bat-info { background: var(--bg3); }
+  .bat-row.bat-row-active .bat-info { background: var(--bg4); }
+
+  /* Nombre: truncar si no cabe en 150px */
+  .bat-name {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Stats: sin scroll propio, delegar al parent */
+  .bat-stats {
+    overflow-x: visible !important;
+    flex-wrap: nowrap !important;
+    flex: 1;
+    padding: 0 2px;
+  }
+
+  /* Celdas de stat: ancho fijo */
+  .bat-stat {
+    min-width: 52px !important;
+    flex-shrink: 0;
+    padding: 6px 3px;
+  }
+  .bat-stat-lbl { font-size: 9px; }
+  .bat-stat-val { font-size: 12px; }
+
+  /* Filas del gamelog: mismo ancho */
+  .gl-row, .gl-header-row {
+    min-width: 900px;
+  }
+  .gamelog-panel { overflow-x: visible; }
+  .bat-info.gl-info {
+    background: var(--bg) !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    width: 130px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    padding: 6px 8px !important;
+    gap: 6px;
+  }
+  .gl-header-row .bat-info { background: var(--bg3) !important; }
+
+  /* ── DROPDOWN EQUIPOS MOBILE ── */
+  .mobile-team-dropdown {
+    display: block;
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Sora', sans-serif;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    transition: border-color .15s;
+  }
+  .mobile-team-dropdown:focus { border-color: var(--accent); }
+  .mobile-team-dropdown option { background: var(--bg3); color: var(--text); }
+  .desktop-pills { display: none !important; }
+  .team-tab-bar { padding: 10px 12px; }
+}
+
+@media (min-width: 769px) {
+  .mobile-team-dropdown { display: none; }
+  .desktop-pills { display: flex; }
+}
 </style>
 </head>
 <body>
@@ -886,7 +1004,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     </div>
 
     <div class="team-tab-bar">
-      <div id="bat-team-pills"></div>
+      <div id="bat-team-pills" class="desktop-pills"></div>
+      <select class="mobile-team-dropdown" id="bat-team-select-mobile" onchange="if(this.value) selectBatTeam(parseInt(this.value))">
+        <option value="">— Selecciona equipo —</option>
+      </select>
     </div>
 
     <div class="player-search-bar">
@@ -913,7 +1034,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     </div>
 
     <div class="team-tab-bar">
-      <div id="team-pills"></div>
+      <div id="team-pills" class="desktop-pills"></div>
+      <select class="mobile-team-dropdown" id="team-select-mobile" onchange="if(this.value) selectTeam(parseInt(this.value))">
+        <option value="">— Selecciona equipo —</option>
+      </select>
     </div>
 
     <div class="player-search-bar">
@@ -1017,6 +1141,11 @@ function renderPills(list) {
   container.innerHTML = list.map(t =>
     `<button class="team-pill${currentTeamId === t.id ? ' active' : ''}" id="pill-${t.id}" onclick="selectTeam(${t.id})">${t.name}</button>`
   ).join('');
+  const sel = document.getElementById('team-select-mobile');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Selecciona equipo —</option>' +
+      list.map(t => `<option value="${t.id}"${currentTeamId === t.id ? ' selected' : ''} data-abbr="${t.abbr}">${t.name}</option>`).join('');
+  }
 }
 
 renderPills(MLB_TEAMS);
@@ -1353,6 +1482,11 @@ function renderBatPills(list) {
   document.getElementById('bat-team-pills').innerHTML = list.map(t =>
     `<button class="team-pill${currentBatTeamId === t.id ? ' active' : ''}" id="bat-pill-${t.id}" onclick="selectBatTeam(${t.id})">${t.name}</button>`
   ).join('');
+  const sel = document.getElementById('bat-team-select-mobile');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Selecciona equipo —</option>' +
+      list.map(t => `<option value="${t.id}"${currentBatTeamId === t.id ? ' selected' : ''} data-abbr="${t.abbr}">${t.name}</option>`).join('');
+  }
 }
 renderBatPills(MLB_TEAMS);
 
