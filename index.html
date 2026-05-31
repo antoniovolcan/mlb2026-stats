@@ -1444,19 +1444,13 @@ async function selectAllPitchers() {
 function filterPitchers(q) {
   const clearBtn = document.getElementById('clear-search');
   clearBtn.style.display = q ? 'flex' : 'none';
-  const rows = document.querySelectorAll('.pitcher-row');
-  const groupLabels = document.querySelectorAll('.section-group-label');
-  if (!q) {
-    rows.forEach(r => r.style.display = '');
-    groupLabels.forEach(l => l.style.display = '');
-    return;
-  }
+  const wraps = document.querySelectorAll('[id^="prow-wrap-"]');
+  if (!q) { wraps.forEach(r => r.style.display = ''); return; }
   const lower = q.toLowerCase();
-  rows.forEach(r => {
-    const name = r.querySelector('.pitcher-name')?.textContent.toLowerCase() || '';
+  wraps.forEach(r => {
+    const name = r.querySelector('.bat-name')?.textContent.toLowerCase() || '';
     r.style.display = name.includes(lower) ? '' : 'none';
   });
-  groupLabels.forEach(l => l.style.display = 'none');
 }
 
 function clearPlayerSearch() {
@@ -2131,15 +2125,13 @@ function setBatSplit(s, btn) {
 function filterBatters(q) {
   const clearBtn = document.getElementById('bat-clear-search');
   clearBtn.style.display = q ? 'flex' : 'none';
-  const rows = document.querySelectorAll('[id^="bat-row-"]');
-  const labels = document.querySelectorAll('#bat-roster-area .section-group-label');
-  if (!q) { rows.forEach(r => r.style.display = ''); labels.forEach(l => l.style.display = ''); return; }
+  const wraps = document.querySelectorAll('[id^="bat-wrap-"]');
+  if (!q) { wraps.forEach(r => r.style.display = ''); return; }
   const lower = q.toLowerCase();
-  rows.forEach(r => {
-    const name = r.querySelector('.pitcher-name')?.textContent.toLowerCase() || '';
+  wraps.forEach(r => {
+    const name = r.querySelector('.bat-name')?.textContent.toLowerCase() || '';
     r.style.display = name.includes(lower) ? '' : 'none';
   });
-  labels.forEach(l => l.style.display = 'none');
 }
 
 function clearBatterSearch() {
