@@ -1093,6 +1093,53 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .bat-team-select:focus { border-color: var(--accent); }
 .bat-team-select option { background: var(--bg2); color: var(--text); }
+
+/* ===================== */
+/* VS PITCHER SEARCH     */
+/* ===================== */
+.vs-search-wrap { position: relative; width: 100%; }
+.vs-pitcher-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Sora', sans-serif;
+  outline: none;
+  transition: border-color .15s;
+}
+.vs-pitcher-input:focus { border-color: var(--accent); }
+.vs-pitcher-input::placeholder { color: var(--text3); }
+.vs-search-results {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  scrollbar-width: none;
+}
+.vs-search-results::-webkit-scrollbar { display: none; }
+.vs-search-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Sora', sans-serif;
+  border-bottom: 1px solid rgba(37,43,56,.5);
+  transition: background .1s;
+}
+.vs-search-result-item:last-child { border-bottom: none; }
+.vs-search-result-item:hover { background: var(--bg4); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1161,10 +1208,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
       </div>
     </div>
 
-    <div class="team-tab-bar">
-      <div id="team-pills" class="desktop-pills"></div>
-      <select class="mobile-team-dropdown" id="team-select-mobile" onchange="if(this.value) selectTeam(parseInt(this.value))">
-        <option value="">— Selecciona equipo —</option>
+    <div class="bat-team-selector-wrap">
+      <select class="bat-team-select" id="pitcher-team-select" onchange="handlePitcherTeamChange(this.value)">
+        <option value="all">&#9918; TODOS — MLB</option>
       </select>
     </div>
 
@@ -1186,22 +1232,22 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
       <span class="live-badge">Histórico</span>
     </div>
     <div class="vs-builder">
-
-      <!-- PITCHER (primero) -->
+      <!-- PITCHER — buscador por nombre -->
       <div class="vs-side">
         <div class="vs-side-label">Pitcher</div>
         <div class="vs-preview" id="vs-pit-preview">
           <div class="vs-preview-empty">
             <span class="vs-preview-icon">⚾</span>
-            <span class="vs-preview-hint">Selecciona equipo</span>
+            <span class="vs-preview-hint">Busca un pitcher</span>
           </div>
         </div>
-        <select class="vs-select" id="vs-pit-team" onchange="vsLoadPitchers()">
-          <option value="">— Selecciona equipo —</option>
-        </select>
-        <select class="vs-select" id="vs-pitcher" onchange="vsOnPitcherSelect()" disabled>
-          <option value="">— Selecciona pitcher —</option>
-        </select>
+        <div class="vs-search-wrap">
+          <input class="vs-pitcher-input" id="vs-pitcher-search" type="text"
+                 placeholder="Buscar pitcher por nombre..."
+                 oninput="vsPitcherSearch(this.value)"
+                 autocomplete="off">
+          <div id="vs-pitcher-results" class="vs-search-results"></div>
+        </div>
       </div>
 
       <div class="vs-divider">VS</div>
@@ -1219,6 +1265,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
           <option value="">— Selecciona equipo rival —</option>
         </select>
       </div>
+    </div>
 
     </div>
 
@@ -1332,7 +1379,8 @@ function clearPlayerSearch() {
 // SELECT TEAM
 async function selectTeam(id) {
   currentTeamId = id;
-  renderPills(MLB_TEAMS);
+  const ptSel = document.getElementById('pitcher-team-select');
+  if (ptSel) ptSel.value = id;
 
   // Reset player search
   const psInput = document.getElementById('player-search');
@@ -2125,50 +2173,66 @@ function findSplit(splits, keys) {
 // =====================
 // VERSUS
 // =====================
+let vsPitchersList = [];
+let vsSelectedPitcherId = null;
+let vsSelectedPitcherName = '';
+
 function vsInitTeams() {
   const opts = MLB_TEAMS.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  document.getElementById('vs-pit-team').innerHTML = '<option value="">— Selecciona equipo —</option>' + opts;
   document.getElementById('vs-opp-team').innerHTML = '<option value="">— Selecciona equipo rival —</option>' + opts;
 }
 vsInitTeams();
 
-async function vsLoadPitchers() {
-  const teamId = document.getElementById('vs-pit-team').value;
-  const sel = document.getElementById('vs-pitcher');
-  sel.innerHTML = '<option value="">Cargando...</option>';
-  sel.disabled = true;
-  const preview = document.getElementById('vs-pit-preview');
-  if (!teamId) {
-    preview.innerHTML = '<div class="vs-preview-empty"><span class="vs-preview-icon">⚾</span><span class="vs-preview-hint">Selecciona equipo</span></div>';
-    sel.innerHTML = '<option value="">— Selecciona pitcher —</option>';
-    document.getElementById('vs-result').innerHTML = '';
-    return;
-  }
-  preview.innerHTML = `<img class="preview-logo" src="https://www.mlbstatic.com/team-logos/${teamId}.svg" onerror="this.style.display='none'">`;
+async function vsEnsurePitchers() {
+  if (vsPitchersList.length) return;
   try {
-    const res = await fetch(`https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2026&sportId=1&stats=season&group=pitching&gameType=R&limit=1000000&offset=0&sortStat=inningsPitched&order=desc&teamId=${teamId}`);
+    const res = await fetch('https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2026&sportId=1&stats=season&group=pitching&gameType=R&limit=1000000&offset=0&sortStat=inningsPitched&order=desc');
     const d = await res.json();
-    const players = (d.stats || []).filter(s => s.playerId && s.inningsPitched);
-    sel.innerHTML = '<option value="">— Selecciona pitcher —</option>' +
-      players.map(p => `<option value="${p.playerId}" data-name="${p.playerFirstName} ${p.playerLastName}">${p.playerFirstName} ${p.playerLastName}</option>`).join('');
-    sel.disabled = false;
-  } catch(e) { sel.innerHTML = '<option value="">Error cargando</option>'; }
+    vsPitchersList = (d.stats || [])
+      .filter(s => s.playerId && s.inningsPitched)
+      .map(s => ({
+        id: s.playerId,
+        name: `${s.playerFirstName || ''} ${s.playerLastName || ''}`.trim(),
+        team: s.teamAbbrev || s.teamName || '',
+        teamId: s.teamId
+      }));
+  } catch(e) { console.warn('Could not load pitchers list', e); }
+}
+vsEnsurePitchers(); // precargar al abrir la página
+
+function vsPitcherSearch(q) {
+  const results = document.getElementById('vs-pitcher-results');
+  if (!q || q.length < 2) { results.style.display = 'none'; return; }
+  const lower = q.toLowerCase();
+  const matches = vsPitchersList.filter(p => p.name.toLowerCase().includes(lower)).slice(0, 12);
+  if (!matches.length) { results.style.display = 'none'; return; }
+  results.innerHTML = matches.map(p =>
+    `<div class="vs-search-result-item" onclick="vsSelectPitcher(${p.id}, '${p.name.replace(/'/g,"\\'")}', ${p.teamId || 0})">
+      <span>${p.name}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${p.team}</span>
+    </div>`
+  ).join('');
+  results.style.display = 'block';
 }
 
-function vsOnPitcherSelect() {
-  const sel = document.getElementById('vs-pitcher');
-  const pid = sel.value;
-  const preview = document.getElementById('vs-pit-preview');
-  const pitTeamId = document.getElementById('vs-pit-team').value;
-  if (!pid) {
-    preview.innerHTML = `<div class="vs-preview-logo-only"><img class="preview-logo" src="https://www.mlbstatic.com/team-logos/${pitTeamId}.svg"></div>`;
-    return;
+// Cerrar resultados al hacer click fuera
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.vs-search-wrap')) {
+    const r = document.getElementById('vs-pitcher-results');
+    if (r) r.style.display = 'none';
   }
-  const name = sel.options[sel.selectedIndex]?.dataset.name || sel.options[sel.selectedIndex]?.text || '';
+});
+
+function vsSelectPitcher(id, name, teamId) {
+  vsSelectedPitcherId = id;
+  vsSelectedPitcherName = name;
+  document.getElementById('vs-pitcher-search').value = name;
+  document.getElementById('vs-pitcher-results').style.display = 'none';
+  const preview = document.getElementById('vs-pit-preview');
   preview.innerHTML = `
-    <img class="preview-player" style="width:100px;height:100px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);display:block;margin:0 auto 8px"
-         src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pid}/headshot/67/current"
-         onerror="this.src='https://www.mlbstatic.com/team-logos/${pitTeamId}.svg'">
+    <img style="width:100px;height:100px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);display:block;margin:0 auto 8px"
+         src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${id}/headshot/67/current"
+         onerror="this.style.opacity='.3'">
     <span class="vs-preview-name">${name}</span>`;
   vsCheckReady();
 }
@@ -2190,9 +2254,8 @@ function vsOnOppTeamSelect() {
 }
 
 function vsCheckReady() {
-  const pitId = document.getElementById('vs-pitcher').value;
   const oppTeamId = document.getElementById('vs-opp-team').value;
-  if (pitId && oppTeamId) vsLoadPitcherVsTeam(pitId, oppTeamId);
+  if (vsSelectedPitcherId && oppTeamId) vsLoadPitcherVsTeam(vsSelectedPitcherId, oppTeamId);
 }
 
 async function vsLoadPitcherVsTeam(pitId, oppTeamId) {
@@ -2226,7 +2289,7 @@ async function vsLoadPitcherVsTeam(pitId, oppTeamId) {
           obp: stat.onBasePercentage ? parseFloat(stat.onBasePercentage).toFixed(3) : '—',
           ops: stat.ops ? parseFloat(stat.ops).toFixed(3) : '—',
         };
-      } catch { return { name: `${b.playerFirstName} ${b.playerLastName}`, pos: b.primaryPositionAbbrev||'—', batSide:'?', ab:0, h:'—', hr:'—', bb:'—', so:'—', avg:'—', obp:'—', ops:'—' }; }
+      } catch { return { name:`${b.playerFirstName} ${b.playerLastName}`, pos:b.primaryPositionAbbrev||'—', batSide:'?', ab:0, h:'—', hr:'—', bb:'—', so:'—', avg:'—', obp:'—', ops:'—' }; }
     }));
 
     const oppTeam = MLB_TEAMS.find(t => t.id == oppTeamId);
@@ -2239,28 +2302,24 @@ async function vsLoadPitcherVsTeam(pitId, oppTeamId) {
 function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
   const pitPhoto = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pit.id}/headshot/67/current`;
   const oppLogo = `https://www.mlbstatic.com/team-logos/${oppTeamId}.svg`;
-  const withHistory = results.filter(r => r.ab > 0);
-  const noHistory = results.filter(r => r.ab === 0);
-  const sorted = [...withHistory.sort((a,b) => b.ab - a.ab), ...noHistory];
+  const withHistory = results.filter(r => r.ab > 0).sort((a,b) => b.ab - a.ab);
+  const noHistory   = results.filter(r => r.ab === 0);
+  const sorted = [...withHistory, ...noHistory];
 
   const rows = sorted.map((b, i) => {
     const hc = b.batSide === 'L' ? 'hand-L' : b.batSide === 'S' ? 'hand-S' : 'hand-R';
     const hl = b.batSide === 'L' ? 'Z' : b.batSide === 'S' ? 'A' : 'D';
     const avgNum = parseFloat(b.avg);
     const avgCls = b.avg !== '—' && avgNum >= 0.300 ? 'good' : b.avg !== '—' && avgNum < 0.200 && b.ab > 3 ? 'bad' : '';
-    const noData = b.ab === 0;
-    return `<tr class="st-tr" style="${noData ? 'opacity:.5' : ''}">
+    return `<tr class="st-tr" style="${b.ab===0?'opacity:.45':''}">
       <td class="st-td" style="text-align:left;padding-left:12px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;min-width:160px">${i+1}. ${b.name}</td>
       <td class="st-td"><span class="hand-tag ${hc}">${hl}</span></td>
       <td class="st-td" style="color:var(--text3);font-size:11px">${b.pos}</td>
-      <td class="st-td wl-bold">${b.ab || '—'}</td>
-      <td class="st-td">${b.h}</td>
-      <td class="st-td">${b.hr}</td>
-      <td class="st-td">${b.bb}</td>
-      <td class="st-td">${b.so}</td>
+      <td class="st-td wl-bold">${b.ab||'—'}</td>
+      <td class="st-td">${b.h}</td><td class="st-td">${b.hr}</td>
+      <td class="st-td">${b.bb}</td><td class="st-td">${b.so}</td>
       <td class="st-td ${avgCls}" style="font-weight:600">${b.avg}</td>
-      <td class="st-td">${b.obp}</td>
-      <td class="st-td">${b.ops}</td>
+      <td class="st-td">${b.obp}</td><td class="st-td">${b.ops}</td>
     </tr>`;
   }).join('');
 
@@ -2271,15 +2330,15 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
           <img style="width:90px;height:90px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2)"
                src="${pitPhoto}" onerror="this.src='https://www.mlbstatic.com/team-logos/${pit.currentTeam?.id}.svg'">
           <div style="text-align:center">
-            <div class="vs-player-name">${pit.fullName || '—'}</div>
-            <div class="vs-player-team">${pit.currentTeam?.name || ''}</div>
+            <div class="vs-player-name">${pit.fullName||'—'}</div>
+            <div class="vs-player-team">${pit.currentTeam?.name||''}</div>
           </div>
         </div>
         <span class="vs-x" style="font-size:28px">VS</span>
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
           <img style="width:90px;height:90px;object-fit:contain" src="${oppLogo}" onerror="this.style.display='none'">
           <div style="text-align:center">
-            <div class="vs-player-name">${oppTeam?.name || '—'}</div>
+            <div class="vs-player-name">${oppTeam?.name||'—'}</div>
             <div class="vs-player-team">Top ${sorted.length} bateadores 2026</div>
           </div>
         </div>
@@ -2298,12 +2357,10 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
       </table>
     </div>
     <div style="padding:8px 16px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">
-      Bateadores con 0 AB vs este pitcher aparecen atenuados. Ordenados por AB históricos.
+      Bateadores sin ABs vs este pitcher aparecen atenuados. Ordenados por AB históricos.
     </div>
   </div>`;
 }
-
-
 
 
 </script>
