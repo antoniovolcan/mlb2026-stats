@@ -446,22 +446,23 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .tip-result-w { background: rgba(76,175,130,.2); color: var(--green); }
 .tip-result-l { background: rgba(224,82,82,.15); color: var(--red); }
 
-/* Logo outline for dark logos — crisp 1px white border following shape */
-.st-team-logo {
-  width: 32px; height: 32px; object-fit: contain; display: block; margin: auto;
+/* Logo outline — full intensity for dark logos */
+.logo-outline-full {
   filter:
     drop-shadow(-1px -1px 0 rgba(255,255,255,.7))
     drop-shadow( 1px -1px 0 rgba(255,255,255,.7))
     drop-shadow(-1px  1px 0 rgba(255,255,255,.7))
     drop-shadow( 1px  1px 0 rgba(255,255,255,.7));
 }
-.vs-logo-outlined {
+/* Logo outline — soft for logos with white elements */
+.logo-outline-soft {
   filter:
-    drop-shadow(-1px -1px 0 rgba(255,255,255,.7))
-    drop-shadow( 1px -1px 0 rgba(255,255,255,.7))
-    drop-shadow(-1px  1px 0 rgba(255,255,255,.7))
-    drop-shadow( 1px  1px 0 rgba(255,255,255,.7));
+    drop-shadow(-1px -1px 0 rgba(255,255,255,.22))
+    drop-shadow( 1px -1px 0 rgba(255,255,255,.22))
+    drop-shadow(-1px  1px 0 rgba(255,255,255,.22))
+    drop-shadow( 1px  1px 0 rgba(255,255,255,.22));
 }
+.st-team-logo { width: 32px; height: 32px; object-fit: contain; display: block; margin: auto; }
 /* Stat description tooltips */
 [data-stat-tip] { position: relative; cursor: help; }
 [data-stat-tip]:hover::after {
@@ -1358,6 +1359,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 </div>
 
 <script>
+// Teams whose logos have white/light elements — use softer outline
+const SOFT_OUTLINE_TEAMS = new Set([158,135,145,112,134,143,108]);
+function logoOutlineClass(teamId) {
+  return SOFT_OUTLINE_TEAMS.has(Number(teamId)) ? 'logo-outline-soft' : 'logo-outline-full';
+}
+
 const MLB_TEAMS = [
   {id:109,abbr:'ARI',name:'Arizona Diamondbacks'},{id:144,abbr:'ATL',name:'Atlanta Braves'},
   {id:110,abbr:'BAL',name:'Baltimore Orioles'},{id:111,abbr:'BOS',name:'Boston Red Sox'},
@@ -2256,7 +2263,7 @@ function renderStandings(records, teamGames) {
 
     // Playoff cutoff lines: top 6 AL + top 6 NL make playoffs (3 div winners + 3 WC)
     return `<tr class="st-tr">
-      <td class="st-td" style="padding:4px 8px;width:44px"><img class="st-team-logo" src="https://www.mlbstatic.com/team-logos/${t.teamId}.svg" onerror="this.style.display='none'"></td>
+      <td class="st-td" style="padding:4px 8px;width:44px"><img class="st-team-logo ${logoOutlineClass(t.teamId)}" src="https://www.mlbstatic.com/team-logos/${t.teamId}.svg" onerror="this.style.display='none'"></td>
       <td class="st-td td-team">${t.name}</td>
       <td class="st-td wl-bold">${t.w}</td>
       <td class="st-td wl-bold">${t.l}</td>
@@ -2298,7 +2305,7 @@ function showGameTip(e, pill) {
   const logoUrl = `https://www.mlbstatic.com/team-logos/${g.oppId}.svg`;
   const tip = document.getElementById('global-tip');
   tip.innerHTML = `<div class="tip-top">
-    <img class="tip-logo" src="${logoUrl}" onerror="this.style.display='none'">
+    <img class="tip-logo ${logoOutlineClass(g.oppId)}" src="${logoUrl}" onerror="this.style.display='none'">
     <div class="tip-team-info">
       <span class="tip-vsAt">${g.vsAt}</span>
       <span class="tip-team-name">${g.opp}</span>
@@ -2488,7 +2495,7 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
         </div>
         <span class="vs-x" style="font-size:28px">VS</span>
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <img class="vs-logo-outlined" style="width:90px;height:90px;object-fit:contain" src="${oppLogo}" onerror="this.style.display='none'">
+          <img class="${logoOutlineClass(oppTeamId)}" style="width:90px;height:90px;object-fit:contain" src="${oppLogo}" onerror="this.style.display='none'">
           <div style="text-align:center">
             <div class="vs-player-name">${oppTeam?.name||'—'}</div>
             <div class="vs-player-team">Top ${sorted.length} bateadores 2026</div>
