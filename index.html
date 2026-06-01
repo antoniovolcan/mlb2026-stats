@@ -1210,6 +1210,144 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .gl-split-val { font-size: 13px; font-family: 'Azeret Mono', monospace; color: var(--text); }
 .gl-split-empty { padding: 6px 14px; font-size: 11px; color: var(--text3); }
 
+/* ── PITCHER VS ── */
+.pvs-builder {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 1.5rem;
+}
+.pvs-side { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 220px; }
+.pvs-panels {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.pvs-panel {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  overflow: hidden;
+}
+.pvs-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.pvs-photo {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 10%;
+  border: 2px solid var(--border2);
+  flex-shrink: 0;
+  background: var(--bg4);
+}
+.pvs-photo-placeholder {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--bg4);
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.pvs-player-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pvs-player-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pvs-player-meta { font-size: 11px; color: var(--text3); font-family: 'Azeret Mono', monospace; }
+.pvs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  color: var(--text3);
+  font-size: 13px;
+}
+.pvs-empty-icon { font-size: 36px; opacity: .25; }
+.pvs-table-wrap { overflow-x: auto; }
+.pvs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pvs-table thead tr {
+  background: var(--bg3);
+  border-bottom: 2px solid var(--border2);
+}
+.pvs-table th {
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--text3);
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: right;
+}
+.pvs-table th.th-year { text-align: left; color: var(--text2); }
+.pvs-table th.th-team { text-align: left; padding-left: 6px; }
+.pvs-table td {
+  padding: 6px 10px;
+  text-align: right;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 12.5px;
+  color: var(--text);
+  border-bottom: 1px solid rgba(37,43,56,.5);
+  white-space: nowrap;
+}
+.pvs-table td.td-year {
+  text-align: left;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.pvs-table td.td-team {
+  text-align: left;
+  font-family: 'Sora', sans-serif;
+  font-size: 11px;
+  color: var(--text3);
+  padding-left: 6px;
+}
+.pvs-table tbody tr:last-child td { border-bottom: none; }
+.pvs-table tbody tr:hover { background: var(--bg3); }
+.pvs-table tr.pvs-totals td {
+  border-top: 2px solid var(--border2);
+  background: var(--bg3);
+  font-weight: 600;
+  color: var(--accent2);
+}
+.pvs-table tr.pvs-totals td.td-year { font-size: 11px; letter-spacing: .5px; color: var(--accent2); font-family: 'Sora', sans-serif; font-weight: 700; }
+.pvs-loading { display: flex; align-items: center; gap: 8px; padding: 24px 16px; color: var(--text3); font-size: 13px; }
+.pvs-na { color: var(--text3); }
+@media (max-width: 700px) {
+  .pvs-panels { flex-direction: column; }
+  .pvs-panel { width: 100%; }
+}
+
 /* ── POST-IT FLOTANTE ── */
 #postit {
   position: fixed;
@@ -1324,6 +1462,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     <div class="nav-tab" onclick="showSection('bateadores')">Bateadores</div>
     <div class="nav-tab active" onclick="showSection('pitchers')">Pitchers</div>
     <div class="nav-tab" onclick="showSection('versus')">Versus</div>
+    <div class="nav-tab" onclick="showSection('pvs')">Pitcher VS</div>
   </nav>
 </header>
 
@@ -1423,6 +1562,45 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 
     <div id="vs-result"></div>
 
+  </div>
+
+  <!-- PITCHER VS -->
+  <div class="section-panel" id="sec-pvs">
+    <div class="section-header">
+      <div class="section-title">Pitcher VS</div>
+      <span class="live-badge">Histórico</span>
+    </div>
+
+    <div class="pvs-builder">
+      <div class="pvs-side">
+        <div class="vs-side-label">Pitcher A</div>
+        <div class="vs-search-wrap">
+          <input class="vs-pitcher-input" id="pvs-search-a" type="text"
+                 placeholder="Buscar pitcher..." oninput="pvsSearch('a', this.value)" autocomplete="off">
+          <div id="pvs-results-a" class="vs-search-results"></div>
+        </div>
+      </div>
+
+      <div class="vs-divider">VS</div>
+
+      <div class="pvs-side">
+        <div class="vs-side-label">Pitcher B</div>
+        <div class="vs-search-wrap">
+          <input class="vs-pitcher-input" id="pvs-search-b" type="text"
+                 placeholder="Buscar pitcher..." oninput="pvsSearch('b', this.value)" autocomplete="off">
+          <div id="pvs-results-b" class="vs-search-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pvs-panels">
+      <div class="pvs-panel" id="pvs-panel-a">
+        <div class="pvs-empty"><div class="pvs-empty-icon">⚾</div><span>Selecciona el Pitcher A</span></div>
+      </div>
+      <div class="pvs-panel" id="pvs-panel-b">
+        <div class="pvs-empty"><div class="pvs-empty-icon">⚾</div><span>Selecciona el Pitcher B</span></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -2590,6 +2768,183 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
   </div>`;
 }
 
+// ── PITCHER VS ────────────────────────────────────────────────────────────────
+
+const PVS_COLS = [
+  {k:'inningsPitched', l:'IP'},
+  {k:'strikeOuts',     l:'K'},
+  {k:'hits',           l:'H'},
+  {k:'runs',           l:'R', alt:'earnedRuns'},
+  {k:'homeRuns',       l:'HR'},
+  {k:'era',            l:'ERA',  dec:2},
+  {k:'whip',           l:'WHIP', dec:2},
+  {k:'avg',            l:'AVG',  dec:3},
+  {k:'obp',            l:'OBP',  dec:3},
+  {k:'ops',            l:'OPS',  dec:3},
+];
+
+let pvsA = null;  // { id, name, teamId, team }
+let pvsB = null;
+let pvsCareerCache = {};  // { [pid]: splits[] }
+
+function pvsSearch(side, q) {
+  const resultsEl = document.getElementById('pvs-results-' + side);
+  if (!q || q.length < 2) { resultsEl.style.display = 'none'; return; }
+  const lower = q.toLowerCase();
+  const matches = vsPitchersList.filter(p => p.name.toLowerCase().includes(lower)).slice(0, 12);
+  if (!matches.length) { resultsEl.style.display = 'none'; return; }
+  resultsEl.innerHTML = matches.map(p =>
+    `<div class="vs-search-result-item" onclick="pvsSelect('${side}', ${p.id}, '${p.name.replace(/'/g,"\\'")}', ${p.teamId || 0}, '${p.team}')">
+      <span>${p.name}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:'Azeret Mono',monospace">${p.team}</span>
+    </div>`
+  ).join('');
+  resultsEl.style.display = 'block';
+}
+
+function pvsSelect(side, id, name, teamId, team) {
+  if (side === 'a') pvsA = { id, name, teamId, team };
+  else              pvsB = { id, name, teamId, team };
+  document.getElementById('pvs-search-' + side).value = name;
+  document.getElementById('pvs-results-' + side).style.display = 'none';
+  pvsLoadPanel(side, id, name, teamId, team);
+}
+
+// Cerrar dropdowns al click fuera
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#pvs-search-a') && !e.target.closest('#pvs-results-a')) {
+    const r = document.getElementById('pvs-results-a');
+    if (r) r.style.display = 'none';
+  }
+  if (!e.target.closest('#pvs-search-b') && !e.target.closest('#pvs-results-b')) {
+    const r = document.getElementById('pvs-results-b');
+    if (r) r.style.display = 'none';
+  }
+});
+
+async function pvsLoadPanel(side, pid, name, teamId, team) {
+  const panel = document.getElementById('pvs-panel-' + side);
+  panel.innerHTML = `<div class="pvs-loading"><div class="spinner"></div>Cargando carrera de ${name}...</div>`;
+
+  try {
+    let splits;
+    if (pvsCareerCache[pid]) {
+      splits = pvsCareerCache[pid];
+    } else {
+      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=yearByYear&group=pitching&gameType=R`);
+      const d = await res.json();
+      splits = (d.stats?.[0]?.splits || []).filter(s => s.stat?.inningsPitched && parseFloat(s.stat.inningsPitched) > 0);
+      pvsCareerCache[pid] = splits;
+    }
+
+    // Fetch photo + hand info
+    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam`);
+    const infoD = await infoRes.json();
+    const hand = infoD.people?.[0]?.pitchHand?.code || '?';
+    const currentTeamName = infoD.people?.[0]?.currentTeam?.name || team || '—';
+
+    panel.innerHTML = pvsBuildPanel(pid, name, hand, currentTeamName, splits);
+  } catch(e) {
+    panel.innerHTML = `<div class="pvs-loading" style="color:var(--red)">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function pvsFmt(val, dec) {
+  if (val === undefined || val === null || val === '' || val === '-') return '<span class="pvs-na">—</span>';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '<span class="pvs-na">—</span>';
+  return dec ? n.toFixed(dec) : val;
+}
+
+function pvsBuildPanel(pid, name, hand, currentTeam, splits) {
+  const handLabel = hand === 'L' ? 'Z' : hand === 'R' ? 'D' : hand;
+  const photoUrl  = `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_100/v1/people/${pid}/headshot/milb/current`;
+  const teamLogoUrl = '';
+
+  // Header
+  const header = `
+    <div class="pvs-panel-header">
+      <img class="pvs-photo" src="${photoUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="pvs-photo-placeholder" style="display:none">⚾</div>
+      <div class="pvs-player-info">
+        <div class="pvs-player-name">${name}</div>
+        <div class="pvs-player-meta">${currentTeam} · <span class="hand-tag hand-${hand}" style="font-size:10px;padding:1px 5px">${handLabel}</span></div>
+      </div>
+    </div>`;
+
+  if (!splits.length) {
+    return header + `<div class="pvs-empty" style="padding:30px 20px"><span>Sin datos históricos disponibles</span></div>`;
+  }
+
+  // Columnas header
+  const thCols = PVS_COLS.map(c => `<th>${c.l}</th>`).join('');
+  const thead = `<thead><tr><th class="th-year">AÑO</th><th class="th-team">EQUIPO</th>${thCols}</tr></thead>`;
+
+  // Acumuladores para totales
+  let totIP = 0, totK = 0, totH = 0, totR = 0, totHR = 0, totER = 0, totBF = 0;
+  let totBB = 0, totHits = 0;
+
+  const rows = splits.map(s => {
+    const st = s.stat || {};
+    const year = s.season || s.year || '—';
+    const teamAbbr = s.team?.abbreviation || s.team?.name || '—';
+
+    // acumular para totales calculables
+    const ip = parseFloat(st.inningsPitched) || 0;
+    totIP  += ip;
+    totK   += parseInt(st.strikeOuts) || 0;
+    totH   += parseInt(st.hits) || 0;
+    totR   += parseInt(st.runs || st.earnedRuns) || 0;
+    totHR  += parseInt(st.homeRuns) || 0;
+    totER  += parseInt(st.earnedRuns || st.runs) || 0;
+    totBB  += parseInt(st.baseOnBalls) || 0;
+
+    const tds = PVS_COLS.map(c => {
+      let v = st[c.k];
+      if ((v === undefined || v === null || v === '') && c.alt) v = st[c.alt];
+      return `<td>${pvsFmt(v, c.dec)}</td>`;
+    }).join('');
+
+    return `<tr><td class="td-year">${year}</td><td class="td-team">${teamAbbr}</td>${tds}</tr>`;
+  }).join('');
+
+  // Fila de totales/promedios
+  const totalIPStr = ipToStr(totIP);
+  const totalERA   = totIP > 0 ? ((totER * 9) / totIP).toFixed(2) : '—';
+  const totalWHIP  = totIP > 0 ? ((totH + totBB) / totIP).toFixed(2) : '—';
+
+  // Para AVG, OBP, OPS en carrera usamos la API career si hay datos,
+  // sino mostramos —
+  const careerTotals = {
+    inningsPitched: totalIPStr,
+    strikeOuts: totK,
+    hits: totH,
+    runs: totR,
+    homeRuns: totHR,
+    era: totalERA,
+    whip: totalWHIP,
+    avg: null, obp: null, ops: null
+  };
+
+  const totalTds = PVS_COLS.map(c => {
+    let v = careerTotals[c.k];
+    if (v === null || v === undefined) return `<td><span class="pvs-na">—</span></td>`;
+    return `<td>${pvsFmt(v, c.dec)}</td>`;
+  }).join('');
+
+  const totalRow = `<tr class="pvs-totals">
+    <td class="td-year">TOTAL</td><td class="td-team"></td>${totalTds}
+  </tr>`;
+
+  return header + `
+    <div class="pvs-table-wrap">
+      <table class="pvs-table">
+        ${thead}
+        <tbody>${rows}${totalRow}</tbody>
+      </table>
+    </div>`;
+}
+
 // ── POST-IT FLOTANTE ──────────────────────────────────────────────────────────
 (function () {
   const pi      = document.getElementById('postit');
@@ -2777,7 +3132,7 @@ document.addEventListener('mousedown', e => {
 // Soporte hash en URL al cargar (para pestañas abiertas con middle-click)
 (function () {
   const hash = window.location.hash.replace('#', '');
-  const valid = ['equipos', 'bateadores', 'pitchers', 'versus'];
+  const valid = ['equipos', 'bateadores', 'pitchers', 'versus', 'pvs'];
   if (valid.includes(hash)) showSection(hash);
 })();
 
