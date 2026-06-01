@@ -2721,6 +2721,66 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
   fab.style.right  = '24px';
 })();
 
+// ── MIDDLE-CLICK: abrir en nueva pestaña ─────────────────────────────────────
+document.addEventListener('mousedown', e => {
+  if (e.button !== 1) return; // solo rueda / botón medio
+
+  const base = window.location.origin + window.location.pathname;
+
+  // 1. Nav tab → abrir sección en nueva pestaña con hash
+  const tab = e.target.closest('.nav-tab');
+  if (tab) {
+    const onclick = tab.getAttribute('onclick') || '';
+    const m = onclick.match(/showSection\('(\w+)'\)/);
+    if (m) {
+      e.preventDefault();
+      window.open(base + '#' + m[1], '_blank');
+      return;
+    }
+  }
+
+  // 2. Fila de pitcher → mlb.com/player/{id}
+  const prow = e.target.closest('[id^="prow-"]');
+  if (prow) {
+    const pid = prow.id.replace('prow-', '');
+    if (pid) {
+      e.preventDefault();
+      window.open('https://www.mlb.com/player/' + pid, '_blank');
+      return;
+    }
+  }
+
+  // 3. Fila de bateador → mlb.com/player/{id}
+  const brow = e.target.closest('[id^="bat-row-"]');
+  if (brow) {
+    const pid = brow.id.replace('bat-row-', '');
+    if (pid) {
+      e.preventDefault();
+      window.open('https://www.mlb.com/player/' + pid, '_blank');
+      return;
+    }
+  }
+
+  // 4. Resultado VS (item de autocomplete pitcher)
+  const vsItem = e.target.closest('.vs-search-result-item');
+  if (vsItem) {
+    const onclick2 = vsItem.getAttribute('onclick') || '';
+    const m2 = onclick2.match(/vsSelectPitcher\((\d+)/);
+    if (m2) {
+      e.preventDefault();
+      window.open('https://www.mlb.com/player/' + m2[1], '_blank');
+      return;
+    }
+  }
+});
+
+// Soporte hash en URL al cargar (para pestañas abiertas con middle-click)
+(function () {
+  const hash = window.location.hash.replace('#', '');
+  const valid = ['equipos', 'bateadores', 'pitchers', 'versus'];
+  if (valid.includes(hash)) showSection(hash);
+})();
+
 </script>
 <div id="global-tip" style="display:none;position:absolute;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.5);min-width:200px;pointer-events:none;"></div>
 </body>
