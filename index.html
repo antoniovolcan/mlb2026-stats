@@ -1356,43 +1356,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .pvs-season-row:hover { background: var(--bg3); }
 .pvs-season-row td.td-year { color: var(--accent); }
 .pvs-gl-row > td { padding: 0 !important; border-bottom: 2px solid var(--border2); }
-.pvs-gl-inner { background: var(--bg); }
-.pvs-gl-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11.5px;
-}
-.pvs-gl-table thead tr { background: var(--bg4); border-bottom: 1px solid var(--border2); }
-.pvs-gl-table th {
-  padding: 5px 8px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .6px;
-  color: var(--text3);
-  text-transform: uppercase;
-  text-align: right;
-  white-space: nowrap;
-}
-.pvs-gl-table th:first-child,
-.pvs-gl-table th:nth-child(2),
-.pvs-gl-table th:nth-child(3) { text-align: left; }
-.pvs-gl-table td {
-  padding: 5px 8px;
-  font-family: 'Azeret Mono', monospace;
-  font-size: 11.5px;
-  color: var(--text);
-  text-align: right;
-  border-bottom: 1px solid rgba(37,43,56,.4);
-  white-space: nowrap;
-}
-.pvs-gl-table tbody tr:last-child td { border-bottom: none; }
-.pvs-gl-table tbody tr:hover { background: rgba(255,255,255,.03); }
-.pvs-gl-date { text-align: left !important; color: var(--text2) !important; font-size: 11px !important; }
-.pvs-gl-opp  { text-align: left !important; color: var(--text) !important; min-width: 60px; }
-.pvs-dec-w   { text-align: left !important; color: var(--green) !important; font-weight: 700; }
-.pvs-dec-l   { text-align: left !important; color: var(--red)   !important; font-weight: 700; }
-.pvs-dec-nd  { text-align: left !important; color: var(--text3) !important; }
-.pvs-gl-empty { padding: 10px 14px; font-size: 12px; color: var(--text3); }
+.pvs-gl-inner { background: var(--bg); overflow-x: auto; }
+.pvs-dec-w { color: var(--green); font-weight: 700; }
+.pvs-dec-l { color: var(--red);   font-weight: 700; }
 @media (max-width: 700px) {
   .pvs-panels { flex-direction: column; }
   .pvs-panel { width: 100%; }
@@ -3020,42 +2986,59 @@ async function pvsToggleSeason(side, pid, year) {
   }
 }
 
+const PVS_GL_COLS = [
+  {k:'inningsPitched', l:'IP'},
+  {k:'strikeOuts',     l:'K'},
+  {k:'hits',           l:'H'},
+  {k:'runs',           l:'R'},
+  {k:'homeRuns',       l:'HR'},
+  {k:'baseOnBalls',    l:'BB'},
+  {k:'era',            l:'ERA', dec:2},
+];
+
 function pvsRenderGameLog(games) {
-  if (!games.length) return `<div class="pvs-gl-empty">Sin partidos registrados</div>`;
+  if (!games.length) return `<div class="gl-empty" style="padding:10px 14px">Sin partidos registrados</div>`;
+
+  const headerStats = PVS_GL_COLS.map(c =>
+    `<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600">${c.l}</span></span>`
+  ).join('');
+
+  const headerRow = `<div class="gl-row gl-header-row">
+    <div class="bat-info" style="border-right:1px solid var(--border)"></div>
+    <div class="bat-stats">${headerStats}</div>
+  </div>`;
+
   const rows = games.map(g => {
-    const st   = g.stat || {};
-    const raw  = g.date || '';
-    const date = raw.length >= 10 ? raw.slice(5,10).replace('-','/') : raw;
-    const opp  = g.opponent?.abbreviation || g.opponent?.name || '—';
-    const loc  = g.isHome ? 'vs' : '@';
+    const st  = g.stat || {};
+    const raw = g.date || '';
+    const date = raw.length >= 10 ? raw.slice(5,10) : raw;
+    const oppId  = g.opponent?.id;
+    const oppAbbr = (TEAM_ABBR && TEAM_ABBR[oppId]) || g.opponent?.abbreviation || g.opponent?.name || '?';
+    const loc    = g.isHome ? 'vs ' : '@ ';
     const wins   = parseInt(st.wins)   || 0;
     const losses = parseInt(st.losses) || 0;
-    let dec = 'ND', decCls = 'pvs-dec-nd';
-    if (wins   > 0) { dec = 'W'; decCls = 'pvs-dec-w'; }
-    if (losses > 0) { dec = 'L'; decCls = 'pvs-dec-l'; }
-    const ip  = st.inningsPitched ?? '—';
-    const h   = st.hits           ?? '—';
-    const r   = st.runs           ?? '—';
-    const er  = st.earnedRuns     ?? '—';
-    const hr  = st.homeRuns       ?? '—';
-    const bb  = st.baseOnBalls    ?? '—';
-    const k   = st.strikeOuts     ?? '—';
-    const era = st.era ? parseFloat(st.era).toFixed(2) : '—';
-    return `<tr>
-      <td class="pvs-gl-date">${date}</td>
-      <td class="pvs-gl-opp">${loc} ${opp}</td>
-      <td class="${decCls}">${dec}</td>
-      <td>${ip}</td><td>${h}</td><td>${r}</td><td>${er}</td>
-      <td>${hr}</td><td>${bb}</td><td>${k}</td><td>${era}</td>
-    </tr>`;
+    let decHtml = '';
+    if      (wins   > 0) decHtml = `<span class="pvs-dec-w">W</span>`;
+    else if (losses > 0) decHtml = `<span class="pvs-dec-l">L</span>`;
+    // else ND — no mostrar nada para mantener limpio
+
+    const statCells = PVS_GL_COLS.map(c => {
+      let v = st[c.k];
+      const disp = (v===undefined||v===null||v==='') ? '—' : c.dec ? parseFloat(v).toFixed(c.dec) : v;
+      return `<span class="bat-stat"><span class="bat-stat-val">${disp}</span></span>`;
+    }).join('');
+
+    return `<div class="gl-row">
+      <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
+        <span class="gl-date">${date}</span>
+        <span class="gl-opp">${loc}${oppAbbr}</span>
+        ${decHtml ? `<span style="font-size:11px;font-weight:700;margin-left:2px">${decHtml}</span>` : ''}
+      </div>
+      <div class="bat-stats">${statCells}</div>
+    </div>`;
   }).join('');
-  return `<table class="pvs-gl-table">
-    <thead><tr>
-      <th>FECHA</th><th>OPP</th><th>DEC</th>
-      <th>IP</th><th>H</th><th>R</th><th>ER</th><th>HR</th><th>BB</th><th>K</th><th>ERA</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+
+  return headerRow + rows;
 }
 
 // ── POST-IT FLOTANTE ──────────────────────────────────────────────────────────
