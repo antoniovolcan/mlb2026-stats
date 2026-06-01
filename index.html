@@ -1343,6 +1343,56 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .pvs-table tr.pvs-totals td.td-year { font-size: 11px; letter-spacing: .5px; color: var(--accent2); font-family: 'Sora', sans-serif; font-weight: 700; }
 .pvs-loading { display: flex; align-items: center; gap: 8px; padding: 24px 16px; color: var(--text3); font-size: 13px; }
 .pvs-na { color: var(--text3); }
+.pvs-arrow {
+  font-size: 9px;
+  color: var(--text3);
+  display: inline-block;
+  width: 12px;
+  transition: transform .15s;
+}
+.pvs-season-row {
+  cursor: pointer;
+}
+.pvs-season-row:hover { background: var(--bg3); }
+.pvs-season-row td.td-year { color: var(--accent); }
+.pvs-gl-row > td { padding: 0 !important; border-bottom: 2px solid var(--border2); }
+.pvs-gl-inner { background: var(--bg); }
+.pvs-gl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+.pvs-gl-table thead tr { background: var(--bg4); border-bottom: 1px solid var(--border2); }
+.pvs-gl-table th {
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  color: var(--text3);
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+.pvs-gl-table th:first-child,
+.pvs-gl-table th:nth-child(2),
+.pvs-gl-table th:nth-child(3) { text-align: left; }
+.pvs-gl-table td {
+  padding: 5px 8px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text);
+  text-align: right;
+  border-bottom: 1px solid rgba(37,43,56,.4);
+  white-space: nowrap;
+}
+.pvs-gl-table tbody tr:last-child td { border-bottom: none; }
+.pvs-gl-table tbody tr:hover { background: rgba(255,255,255,.03); }
+.pvs-gl-date { text-align: left !important; color: var(--text2) !important; font-size: 11px !important; }
+.pvs-gl-opp  { text-align: left !important; color: var(--text) !important; min-width: 60px; }
+.pvs-dec-w   { text-align: left !important; color: var(--green) !important; font-weight: 700; }
+.pvs-dec-l   { text-align: left !important; color: var(--red)   !important; font-weight: 700; }
+.pvs-dec-nd  { text-align: left !important; color: var(--text3) !important; }
+.pvs-gl-empty { padding: 10px 14px; font-size: 12px; color: var(--text3); }
 @media (max-width: 700px) {
   .pvs-panels { flex-direction: column; }
   .pvs-panel { width: 100%; }
@@ -2822,32 +2872,8 @@ document.addEventListener('click', function(e) {
   }
 });
 
-async function pvsLoadPanel(side, pid, name, teamId, team) {
-  const panel = document.getElementById('pvs-panel-' + side);
-  panel.innerHTML = `<div class="pvs-loading"><div class="spinner"></div>Cargando carrera de ${name}...</div>`;
-
-  try {
-    let splits;
-    if (pvsCareerCache[pid]) {
-      splits = pvsCareerCache[pid];
-    } else {
-      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=yearByYear&group=pitching&gameType=R`);
-      const d = await res.json();
-      splits = (d.stats?.[0]?.splits || []).filter(s => s.stat?.inningsPitched && parseFloat(s.stat.inningsPitched) > 0);
-      pvsCareerCache[pid] = splits;
-    }
-
-    // Fetch photo + hand info
-    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam`);
-    const infoD = await infoRes.json();
-    const hand = infoD.people?.[0]?.pitchHand?.code || '?';
-    const currentTeamName = infoD.people?.[0]?.currentTeam?.name || team || '—';
-
-    panel.innerHTML = pvsBuildPanel(pid, name, hand, currentTeamName, splits);
-  } catch(e) {
-    panel.innerHTML = `<div class="pvs-loading" style="color:var(--red)">⚠ Error: ${e.message}</div>`;
-  }
-}
+let pvsGameLogCache = {};  // { `${pid}_${year}`: games[] }
+let pvsOpenSeasons  = {};  // { `${side}_${pid}_${year}`: bool }
 
 function pvsFmt(val, dec) {
   if (val === undefined || val === null || val === '' || val === '-') return '<span class="pvs-na">—</span>';
@@ -2856,12 +2882,36 @@ function pvsFmt(val, dec) {
   return dec ? n.toFixed(dec) : val;
 }
 
-function pvsBuildPanel(pid, name, hand, currentTeam, splits) {
+async function pvsLoadPanel(side, pid, name, teamId, team) {
+  const panel = document.getElementById('pvs-panel-' + side);
+  panel.innerHTML = `<div class="pvs-loading"><div class="spinner"></div>Cargando carrera de ${name}...</div>`;
+  try {
+    let splits;
+    if (pvsCareerCache[pid]) {
+      splits = pvsCareerCache[pid];
+    } else {
+      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=yearByYear&group=pitching&gameType=R`);
+      const d   = await res.json();
+      splits = (d.stats?.[0]?.splits || []).filter(s => s.stat?.inningsPitched && parseFloat(s.stat.inningsPitched) > 0);
+      pvsCareerCache[pid] = splits;
+    }
+    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam`);
+    const infoD   = await infoRes.json();
+    const hand    = infoD.people?.[0]?.pitchHand?.code || '?';
+    const curTeam = infoD.people?.[0]?.currentTeam?.name || team || '—';
+    panel.innerHTML = pvsBuildPanel(side, pid, name, hand, curTeam, splits);
+    // Auto-expand temporada actual
+    const curYear = new Date().getFullYear().toString();
+    if (splits.some(s => s.season === curYear)) pvsToggleSeason(side, pid, curYear);
+  } catch(e) {
+    panel.innerHTML = `<div class="pvs-loading" style="color:var(--red)">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function pvsBuildPanel(side, pid, name, hand, currentTeam, splits) {
   const handLabel = hand === 'L' ? 'Z' : hand === 'R' ? 'D' : hand;
   const photoUrl  = `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_100/v1/people/${pid}/headshot/milb/current`;
-  const teamLogoUrl = '';
 
-  // Header
   const header = `
     <div class="pvs-panel-header">
       <img class="pvs-photo" src="${photoUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -2872,77 +2922,140 @@ function pvsBuildPanel(pid, name, hand, currentTeam, splits) {
       </div>
     </div>`;
 
-  if (!splits.length) {
-    return header + `<div class="pvs-empty" style="padding:30px 20px"><span>Sin datos históricos disponibles</span></div>`;
-  }
+  if (!splits.length) return header + `<div class="pvs-empty" style="padding:30px 20px"><span>Sin datos históricos disponibles</span></div>`;
 
-  // Columnas header
-  const thCols = PVS_COLS.map(c => `<th>${c.l}</th>`).join('');
-  const thead = `<thead><tr><th class="th-year">AÑO</th><th class="th-team">EQUIPO</th>${thCols}</tr></thead>`;
+  // Ordenar descendente por año
+  const sorted = [...splits].sort((a, b) => parseInt(b.season) - parseInt(a.season));
 
-  // Acumuladores para totales
-  let totIP = 0, totK = 0, totH = 0, totR = 0, totHR = 0, totER = 0, totBF = 0;
-  let totBB = 0, totHits = 0;
+  const thCols  = PVS_COLS.map(c => `<th>${c.l}</th>`).join('');
+  const colCount = 2 + PVS_COLS.length; // AÑO + EQUIPO + stats
+  const thead = `<thead><tr>
+    <th class="th-year" style="width:80px">AÑO</th>
+    <th class="th-team">EQUIPO</th>
+    ${thCols}
+  </tr></thead>`;
 
-  const rows = splits.map(s => {
-    const st = s.stat || {};
-    const year = s.season || s.year || '—';
+  // Acumuladores totales
+  let totIP=0, totK=0, totH=0, totR=0, totHR=0, totER=0, totBB=0;
+
+  const tbodies = sorted.map(s => {
+    const st       = s.stat || {};
+    const year     = s.season || '—';
     const teamAbbr = s.team?.abbreviation || s.team?.name || '—';
 
-    // acumular para totales calculables
     const ip = parseFloat(st.inningsPitched) || 0;
-    totIP  += ip;
-    totK   += parseInt(st.strikeOuts) || 0;
-    totH   += parseInt(st.hits) || 0;
-    totR   += parseInt(st.runs || st.earnedRuns) || 0;
-    totHR  += parseInt(st.homeRuns) || 0;
-    totER  += parseInt(st.earnedRuns || st.runs) || 0;
-    totBB  += parseInt(st.baseOnBalls) || 0;
+    totIP += ip;  totK  += parseInt(st.strikeOuts)||0;
+    totH  += parseInt(st.hits)||0;
+    totR  += parseInt(st.runs||st.earnedRuns)||0;
+    totHR += parseInt(st.homeRuns)||0;
+    totER += parseInt(st.earnedRuns||st.runs)||0;
+    totBB += parseInt(st.baseOnBalls)||0;
 
     const tds = PVS_COLS.map(c => {
       let v = st[c.k];
-      if ((v === undefined || v === null || v === '') && c.alt) v = st[c.alt];
+      if ((v===undefined||v===null||v==='') && c.alt) v = st[c.alt];
       return `<td>${pvsFmt(v, c.dec)}</td>`;
     }).join('');
 
-    return `<tr><td class="td-year">${year}</td><td class="td-team">${teamAbbr}</td>${tds}</tr>`;
+    const arrowId = `pvs-arrow-${side}-${pid}-${year}`;
+    const glRowId = `pvs-gl-${side}-${pid}-${year}`;
+    return `<tbody class="pvs-season-group">
+      <tr class="pvs-season-row" onclick="pvsToggleSeason('${side}',${pid},'${year}')">
+        <td class="td-year"><span id="${arrowId}" class="pvs-arrow">▶</span> ${year}</td>
+        <td class="td-team">${teamAbbr}</td>${tds}
+      </tr>
+      <tr id="${glRowId}" class="pvs-gl-row" style="display:none">
+        <td colspan="${colCount}"><div class="pvs-gl-inner"></div></td>
+      </tr>
+    </tbody>`;
   }).join('');
 
-  // Fila de totales/promedios
-  const totalIPStr = ipToStr(totIP);
-  const totalERA   = totIP > 0 ? ((totER * 9) / totIP).toFixed(2) : '—';
-  const totalWHIP  = totIP > 0 ? ((totH + totBB) / totIP).toFixed(2) : '—';
-
-  // Para AVG, OBP, OPS en carrera usamos la API career si hay datos,
-  // sino mostramos —
-  const careerTotals = {
-    inningsPitched: totalIPStr,
-    strikeOuts: totK,
-    hits: totH,
-    runs: totR,
-    homeRuns: totHR,
-    era: totalERA,
-    whip: totalWHIP,
-    avg: null, obp: null, ops: null
-  };
-
-  const totalTds = PVS_COLS.map(c => {
-    let v = careerTotals[c.k];
-    if (v === null || v === undefined) return `<td><span class="pvs-na">—</span></td>`;
-    return `<td>${pvsFmt(v, c.dec)}</td>`;
+  // Fila totales
+  const totalERA  = totIP > 0 ? ((totER*9)/totIP).toFixed(2) : '—';
+  const totalWHIP = totIP > 0 ? ((totH+totBB)/totIP).toFixed(2) : '—';
+  const careerMap = { inningsPitched: ipToStr(totIP), strikeOuts: totK, hits: totH, runs: totR, homeRuns: totHR, era: totalERA, whip: totalWHIP, avg: null, obp: null, ops: null };
+  const totalTds  = PVS_COLS.map(c => {
+    const v = careerMap[c.k];
+    return v===null ? `<td><span class="pvs-na">—</span></td>` : `<td>${pvsFmt(v, c.dec)}</td>`;
   }).join('');
+  const totalBody = `<tbody><tr class="pvs-totals"><td class="td-year">TOTAL</td><td class="td-team"></td>${totalTds}</tr></tbody>`;
 
-  const totalRow = `<tr class="pvs-totals">
-    <td class="td-year">TOTAL</td><td class="td-team"></td>${totalTds}
-  </tr>`;
+  return header + `<div class="pvs-table-wrap"><table class="pvs-table">${thead}${tbodies}${totalBody}</table></div>`;
+}
 
-  return header + `
-    <div class="pvs-table-wrap">
-      <table class="pvs-table">
-        ${thead}
-        <tbody>${rows}${totalRow}</tbody>
-      </table>
-    </div>`;
+async function pvsToggleSeason(side, pid, year) {
+  const glRowId = `pvs-gl-${side}-${pid}-${year}`;
+  const arrowId = `pvs-arrow-${side}-${pid}-${year}`;
+  const glRow   = document.getElementById(glRowId);
+  const arrow   = document.getElementById(arrowId);
+  if (!glRow) return;
+
+  const key = `${side}_${pid}_${year}`;
+  if (pvsOpenSeasons[key]) {
+    pvsOpenSeasons[key] = false;
+    glRow.style.display = 'none';
+    if (arrow) arrow.textContent = '▶';
+    return;
+  }
+
+  pvsOpenSeasons[key] = true;
+  glRow.style.display = '';
+  if (arrow) arrow.textContent = '▼';
+
+  const cacheKey = `${pid}_${year}`;
+  if (pvsGameLogCache[cacheKey]) {
+    glRow.querySelector('.pvs-gl-inner').innerHTML = pvsRenderGameLog(pvsGameLogCache[cacheKey]);
+    return;
+  }
+
+  glRow.querySelector('.pvs-gl-inner').innerHTML = `<div class="pvs-loading"><div class="spinner"></div>Cargando partidos ${year}...</div>`;
+  try {
+    const res   = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=gameLog&group=pitching&season=${year}&gameType=R`);
+    const d     = await res.json();
+    const games = (d.stats?.[0]?.splits || []);
+    pvsGameLogCache[cacheKey] = games;
+    glRow.querySelector('.pvs-gl-inner').innerHTML = pvsRenderGameLog(games);
+  } catch(e) {
+    glRow.querySelector('.pvs-gl-inner').innerHTML = `<div style="color:var(--red);padding:8px 12px">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function pvsRenderGameLog(games) {
+  if (!games.length) return `<div class="pvs-gl-empty">Sin partidos registrados</div>`;
+  const rows = games.map(g => {
+    const st   = g.stat || {};
+    const raw  = g.date || '';
+    const date = raw.length >= 10 ? raw.slice(5,10).replace('-','/') : raw;
+    const opp  = g.opponent?.abbreviation || g.opponent?.name || '—';
+    const loc  = g.isHome ? 'vs' : '@';
+    const wins   = parseInt(st.wins)   || 0;
+    const losses = parseInt(st.losses) || 0;
+    let dec = 'ND', decCls = 'pvs-dec-nd';
+    if (wins   > 0) { dec = 'W'; decCls = 'pvs-dec-w'; }
+    if (losses > 0) { dec = 'L'; decCls = 'pvs-dec-l'; }
+    const ip  = st.inningsPitched ?? '—';
+    const h   = st.hits           ?? '—';
+    const r   = st.runs           ?? '—';
+    const er  = st.earnedRuns     ?? '—';
+    const hr  = st.homeRuns       ?? '—';
+    const bb  = st.baseOnBalls    ?? '—';
+    const k   = st.strikeOuts     ?? '—';
+    const era = st.era ? parseFloat(st.era).toFixed(2) : '—';
+    return `<tr>
+      <td class="pvs-gl-date">${date}</td>
+      <td class="pvs-gl-opp">${loc} ${opp}</td>
+      <td class="${decCls}">${dec}</td>
+      <td>${ip}</td><td>${h}</td><td>${r}</td><td>${er}</td>
+      <td>${hr}</td><td>${bb}</td><td>${k}</td><td>${era}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="pvs-gl-table">
+    <thead><tr>
+      <th>FECHA</th><th>OPP</th><th>DEC</th>
+      <th>IP</th><th>H</th><th>R</th><th>ER</th><th>HR</th><th>BB</th><th>K</th><th>ERA</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 // ── POST-IT FLOTANTE ──────────────────────────────────────────────────────────
