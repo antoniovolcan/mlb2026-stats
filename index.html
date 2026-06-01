@@ -1355,10 +1355,50 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 .pvs-season-row:hover { background: var(--bg3); }
 .pvs-season-row td.td-year { color: var(--accent); }
-.pvs-gl-row > td { padding: 0 !important; border-bottom: 2px solid var(--border2); }
-.pvs-gl-inner { background: var(--bg); overflow-x: auto; }
 .pvs-dec-w { color: var(--green); font-weight: 700; }
 .pvs-dec-l { color: var(--red);   font-weight: 700; }
+/* Sub-header del gamelog */
+.pvs-gl-subheader td {
+  background: var(--bg4);
+  border-top: 2px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  color: var(--text3);
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+.pvs-glh-left { text-align: left !important; }
+/* Filas de juego */
+.pvs-game-row td {
+  padding: 5px 10px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: right;
+  border-bottom: 1px solid rgba(37,43,56,.45);
+  white-space: nowrap;
+  background: var(--bg);
+}
+.pvs-game-row:hover td { background: var(--bg3); }
+.pvs-gl-date {
+  text-align: left !important;
+  font-family: 'Sora', sans-serif !important;
+  font-size: 12px !important;
+  color: var(--text2) !important;
+  white-space: nowrap;
+}
+.pvs-gl-opp {
+  text-align: left !important;
+  font-family: 'Sora', sans-serif !important;
+  font-size: 12px !important;
+  color: var(--text) !important;
+  white-space: nowrap;
+  min-width: 80px;
+}
 @media (max-width: 700px) {
   .pvs-panels { flex-direction: column; }
   .pvs-panel { width: 100%; }
@@ -2923,15 +2963,12 @@ function pvsBuildPanel(side, pid, name, hand, currentTeam, splits) {
       return `<td>${pvsFmt(v, c.dec)}</td>`;
     }).join('');
 
-    const arrowId = `pvs-arrow-${side}-${pid}-${year}`;
-    const glRowId = `pvs-gl-${side}-${pid}-${year}`;
+    const arrowId  = `pvs-arrow-${side}-${pid}-${year}`;
+    const seasonId = `pvs-srow-${side}-${pid}-${year}`;
     return `<tbody class="pvs-season-group">
-      <tr class="pvs-season-row" onclick="pvsToggleSeason('${side}',${pid},'${year}')">
+      <tr class="pvs-season-row" id="${seasonId}" onclick="pvsToggleSeason('${side}',${pid},'${year}')">
         <td class="td-year"><span id="${arrowId}" class="pvs-arrow">▶</span> ${year}</td>
         <td class="td-team">${teamAbbr}</td>${tds}
-      </tr>
-      <tr id="${glRowId}" class="pvs-gl-row" style="display:none">
-        <td colspan="${colCount}"><div class="pvs-gl-inner"></div></td>
       </tr>
     </tbody>`;
   }).join('');
@@ -2949,96 +2986,128 @@ function pvsBuildPanel(side, pid, name, hand, currentTeam, splits) {
   return header + `<div class="pvs-table-wrap"><table class="pvs-table">${thead}${tbodies}${totalBody}</table></div>`;
 }
 
-async function pvsToggleSeason(side, pid, year) {
-  const glRowId = `pvs-gl-${side}-${pid}-${year}`;
-  const arrowId = `pvs-arrow-${side}-${pid}-${year}`;
-  const glRow   = document.getElementById(glRowId);
-  const arrow   = document.getElementById(arrowId);
-  if (!glRow) return;
+// GL cols mapeados a los índices de PVS_COLS (0-based, excluyendo AÑO y EQUIPO)
+// PVS_COLS: 0=IP, 1=K, 2=H, 3=R, 4=HR, 5=ERA, 6=WHIP, 7=AVG, 8=OBP, 9=OPS
+// Gamelog muestra: IP(0) K(1) H(2) R(3) HR(4) ERA(5) BB(en slot 6, donde iría WHIP)
+// Slots 7-9 (AVG OBP OPS) quedan vacíos
+const PVS_GL_MAP = [
+  {k:'inningsPitched', dec:false}, // slot 0 → IP
+  {k:'strikeOuts',     dec:false}, // slot 1 → K
+  {k:'hits',           dec:false}, // slot 2 → H
+  {k:'runs',           dec:false}, // slot 3 → R
+  {k:'homeRuns',       dec:false}, // slot 4 → HR
+  {k:'era',            dec:2},     // slot 5 → ERA
+  {k:'baseOnBalls',    dec:false}, // slot 6 → BB (en lugar de WHIP)
+  null, null, null                 // slots 7-9 vacíos (AVG OBP OPS)
+];
 
-  const key = `${side}_${pid}_${year}`;
+// Sub-header labels para los slots del gamelog
+const PVS_GL_LABELS = ['IP','K','H','R','HR','ERA','BB','','',''];
+
+function pvsGlClass(side, pid, year) {
+  return `pvs-gls-${side}-${pid}-${year}`;
+}
+
+async function pvsToggleSeason(side, pid, year) {
+  const seasonId = `pvs-srow-${side}-${pid}-${year}`;
+  const arrowId  = `pvs-arrow-${side}-${pid}-${year}`;
+  const seasonRow = document.getElementById(seasonId);
+  const arrow     = document.getElementById(arrowId);
+  if (!seasonRow) return;
+
+  const key      = `${side}_${pid}_${year}`;
+  const glClass  = pvsGlClass(side, pid, year);
+
   if (pvsOpenSeasons[key]) {
+    // Cerrar: borrar filas insertadas
     pvsOpenSeasons[key] = false;
-    glRow.style.display = 'none';
     if (arrow) arrow.textContent = '▶';
+    document.querySelectorAll('.' + glClass).forEach(r => r.remove());
     return;
   }
 
   pvsOpenSeasons[key] = true;
-  glRow.style.display = '';
   if (arrow) arrow.textContent = '▼';
 
+  const colCount = 2 + PVS_COLS.length;
+
+  // Fila de carga provisional
+  const loadRow = document.createElement('tr');
+  loadRow.className = `${glClass} pvs-gl-loadrow`;
+  loadRow.innerHTML = `<td colspan="${colCount}" style="padding:10px 14px">
+    <div style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px">
+      <div class="spinner" style="width:12px;height:12px;border-width:1.5px"></div>Cargando partidos ${year}...
+    </div></td>`;
+  seasonRow.insertAdjacentElement('afterend', loadRow);
+
   const cacheKey = `${pid}_${year}`;
-  if (pvsGameLogCache[cacheKey]) {
-    glRow.querySelector('.pvs-gl-inner').innerHTML = pvsRenderGameLog(pvsGameLogCache[cacheKey]);
+  let games;
+  try {
+    if (pvsGameLogCache[cacheKey]) {
+      games = pvsGameLogCache[cacheKey];
+    } else {
+      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=gameLog&group=pitching&season=${year}&gameType=R`);
+      const d   = await res.json();
+      games = d.stats?.[0]?.splits || [];
+      pvsGameLogCache[cacheKey] = games;
+    }
+  } catch(e) {
+    loadRow.innerHTML = `<td colspan="${colCount}" style="color:var(--red);padding:8px 14px;font-size:12px">⚠ Error: ${e.message}</td>`;
     return;
   }
 
-  glRow.querySelector('.pvs-gl-inner').innerHTML = `<div class="pvs-loading"><div class="spinner"></div>Cargando partidos ${year}...</div>`;
-  try {
-    const res   = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=gameLog&group=pitching&season=${year}&gameType=R`);
-    const d     = await res.json();
-    const games = (d.stats?.[0]?.splits || []);
-    pvsGameLogCache[cacheKey] = games;
-    glRow.querySelector('.pvs-gl-inner').innerHTML = pvsRenderGameLog(games);
-  } catch(e) {
-    glRow.querySelector('.pvs-gl-inner').innerHTML = `<div style="color:var(--red);padding:8px 12px">⚠ Error: ${e.message}</div>`;
+  loadRow.remove();
+
+  if (!games.length) {
+    const emptyRow = document.createElement('tr');
+    emptyRow.className = `${glClass} pvs-gl-emptyrow`;
+    emptyRow.innerHTML = `<td colspan="${colCount}" style="padding:10px 14px;font-size:12px;color:var(--text3)">Sin partidos registrados</td>`;
+    seasonRow.insertAdjacentElement('afterend', emptyRow);
+    return;
   }
-}
 
-const PVS_GL_COLS = [
-  {k:'inningsPitched', l:'IP'},
-  {k:'strikeOuts',     l:'K'},
-  {k:'hits',           l:'H'},
-  {k:'runs',           l:'R'},
-  {k:'homeRuns',       l:'HR'},
-  {k:'baseOnBalls',    l:'BB'},
-  {k:'era',            l:'ERA', dec:2},
-];
+  // Sub-header row
+  const subHeaderCells = `<td class="pvs-glh pvs-glh-left">FECHA</td><td class="pvs-glh pvs-glh-left">OPP</td>` +
+    PVS_GL_LABELS.map(l => `<td class="pvs-glh">${l}</td>`).join('');
+  const subHeaderRow = document.createElement('tr');
+  subHeaderRow.className = `${glClass} pvs-gl-subheader`;
+  subHeaderRow.innerHTML = subHeaderCells;
 
-function pvsRenderGameLog(games) {
-  if (!games.length) return `<div class="gl-empty" style="padding:10px 14px">Sin partidos registrados</div>`;
-
-  const headerStats = PVS_GL_COLS.map(c =>
-    `<span class="bat-stat"><span class="bat-stat-lbl" style="color:var(--text3);font-weight:600">${c.l}</span></span>`
-  ).join('');
-
-  const headerRow = `<div class="gl-row gl-header-row">
-    <div class="bat-info" style="border-right:1px solid var(--border)"></div>
-    <div class="bat-stats">${headerStats}</div>
-  </div>`;
-
-  const rows = games.map(g => {
-    const st  = g.stat || {};
-    const raw = g.date || '';
-    const date = raw.length >= 10 ? raw.slice(5,10) : raw;
-    const oppId  = g.opponent?.id;
-    const oppAbbr = (TEAM_ABBR && TEAM_ABBR[oppId]) || g.opponent?.abbreviation || g.opponent?.name || '?';
-    const loc    = g.isHome ? 'vs ' : '@ ';
-    const wins   = parseInt(st.wins)   || 0;
-    const losses = parseInt(st.losses) || 0;
+  // Filas de juego — insertamos en orden inverso para que afterend quede bien
+  const gameRows = games.map(g => {
+    const st    = g.stat || {};
+    const raw   = g.date || '';
+    const date  = raw.length >= 10 ? raw.slice(5,10) : raw;
+    const oppId = g.opponent?.id;
+    const opp   = (TEAM_ABBR && TEAM_ABBR[oppId]) || g.opponent?.abbreviation || g.opponent?.name || '?';
+    const loc   = g.isHome ? 'vs' : '@';
+    const wins  = parseInt(st.wins)   || 0;
+    const loss  = parseInt(st.losses) || 0;
     let decHtml = '';
-    if      (wins   > 0) decHtml = `<span class="pvs-dec-w">W</span>`;
-    else if (losses > 0) decHtml = `<span class="pvs-dec-l">L</span>`;
-    // else ND — no mostrar nada para mantener limpio
+    if      (wins > 0) decHtml = ` <span class="pvs-dec-w">W</span>`;
+    else if (loss > 0) decHtml = ` <span class="pvs-dec-l">L</span>`;
 
-    const statCells = PVS_GL_COLS.map(c => {
-      let v = st[c.k];
-      const disp = (v===undefined||v===null||v==='') ? '—' : c.dec ? parseFloat(v).toFixed(c.dec) : v;
-      return `<span class="bat-stat"><span class="bat-stat-val">${disp}</span></span>`;
+    const statTds = PVS_GL_MAP.map(col => {
+      if (!col) return `<td class="pvs-na">—</td>`;
+      let v = st[col.k];
+      const disp = (v===undefined||v===null||v==='') ? '—' : col.dec ? parseFloat(v).toFixed(col.dec) : v;
+      return `<td>${disp}</td>`;
     }).join('');
 
-    return `<div class="gl-row">
-      <div class="bat-info gl-info" style="border-right:1px solid var(--border)">
-        <span class="gl-date">${date}</span>
-        <span class="gl-opp">${loc}${oppAbbr}</span>
-        ${decHtml ? `<span style="font-size:11px;font-weight:700;margin-left:2px">${decHtml}</span>` : ''}
-      </div>
-      <div class="bat-stats">${statCells}</div>
-    </div>`;
-  }).join('');
+    const tr = document.createElement('tr');
+    tr.className = `${glClass} pvs-game-row`;
+    tr.innerHTML = `<td class="pvs-gl-date">${date}</td><td class="pvs-gl-opp">${loc} ${opp}${decHtml}</td>${statTds}`;
+    return tr;
+  });
 
-  return headerRow + rows;
+  // Insertar: sub-header primero, luego juegos
+  seasonRow.insertAdjacentElement('afterend', subHeaderRow);
+  // Insertar juegos en orden (afterend de subHeader → en orden correcto usando after)
+  let insertAfter = subHeaderRow;
+  for (const row of gameRows) {
+    insertAfter.insertAdjacentElement('afterend', row);
+    insertAfter = row;
+  }
 }
 
 // ── POST-IT FLOTANTE ──────────────────────────────────────────────────────────
