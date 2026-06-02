@@ -1287,7 +1287,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   font-size: 13px;
 }
 .pvs-empty-icon { font-size: 36px; opacity: .25; }
-.pvs-table-wrap { overflow-x: auto; }
+.pvs-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.pvs-table-wrap::-webkit-scrollbar { display: none; }
 .pvs-table {
   width: 100%;
   border-collapse: collapse;
@@ -1476,9 +1477,76 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 }
 /* Cero: gris suave */
 .pvs-bs-zero { color: var(--text3); }
-@media (max-width: 700px) {
-  .pvs-panels { flex-direction: column; }
-  .pvs-panel { width: 100%; }
+/* ── PITCHER VS + POST-IT — RESPONSIVE ── */
+@media (max-width: 768px) {
+
+  /* Builder: apilar verticalmente */
+  .pvs-builder {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  .pvs-side { min-width: unset; width: 100%; }
+
+  /* Paneles: uno encima del otro */
+  .pvs-panels { flex-direction: column; gap: 0.75rem; }
+  .pvs-panel  { width: 100%; min-width: 0; }
+
+  /* Cabecera del panel */
+  .pvs-panel-header { padding: 10px 12px; gap: 10px; }
+  .pvs-photo, .pvs-photo-placeholder { width: 44px; height: 44px; }
+  .pvs-player-name { font-size: 13px; }
+
+  /* Tabla de temporadas: scroll horizontal */
+  .pvs-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pvs-table-wrap::-webkit-scrollbar { display: none; }
+  .pvs-table { min-width: 620px; }
+
+  /* Sub-header y filas de juego heredan ancho de .pvs-table */
+  .pvs-gl-subheader td { padding: 4px 8px; font-size: 8px; }
+  .pvs-game-row td    { padding: 5px 8px;  font-size: 11.5px; }
+  .pvs-gl-date        { font-size: 11px !important; }
+  .pvs-gl-opp         { font-size: 11px !important; min-width: 64px; }
+
+  /* Box score: menos padding, scroll si hace falta */
+  .pvs-boxscore { padding: 10px 12px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pvs-bs-table { font-size: 13px; min-width: 280px; }
+  .pvs-bs-table thead th { padding: 4px 8px; font-size: 9px; }
+  .pvs-bs-table td       { padding: 7px 8px; }
+  .pvs-bs-team           { font-size: 14px !important; padding-right: 12px !important; }
+
+  /* Fila TOTAL: más compacta */
+  .pvs-totals td { padding: 5px 8px; }
+
+  /* Post-it: limitar ancho, deshabilitar resize (touch no lo soporta) */
+  #postit {
+    max-width: calc(100vw - 20px) !important;
+    resize: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* PVS aún más compacto */
+  .pvs-builder { padding: 0.75rem; }
+  .pvs-panel-header { padding: 8px 10px; }
+  .pvs-player-name { font-size: 12px; }
+  .pvs-photo, .pvs-photo-placeholder { width: 38px; height: 38px; }
+
+  /* Tabla: ancho mínimo ajustado */
+  .pvs-table { min-width: 580px; }
+
+  /* Box score: más compacto */
+  .pvs-bs-table { font-size: 12px; }
+  .pvs-bs-table thead th { padding: 3px 6px; }
+  .pvs-bs-table td       { padding: 6px 6px; }
+  .pvs-bs-sep { padding-left: 10px !important; }
+
+  /* Post-it: full width en pantallas muy pequeñas */
+  #postit { width: calc(100vw - 20px) !important; }
 }
 
 /* ── POST-IT FLOTANTE ── */
