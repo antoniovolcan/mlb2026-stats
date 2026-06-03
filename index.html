@@ -2646,7 +2646,7 @@ async function loadStandings() {
     // Get standings + last 10 game results for each team
     const [standRes, schedRes] = await Promise.all([
       fetch('https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026&standingsTypes=regularSeason&hydrate=team,division,league,record(splits(league,division,lastTen,homeAndAway))'),
-      fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1&season=2026&gameType=R&startDate=2026-03-25&endDate=2026-05-31&hydrate=team,linescore&fields=dates,date,games,gamePk,gameDate,teams,away,home,team,id,name,abbreviation,score,isWinner,seriesGameNumber,status,abstractGameState')
+      fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&season=2026&gameType=R&startDate=2026-03-25&endDate=${new Date().toISOString().slice(0,10)}&hydrate=team,linescore&fields=dates,date,games,gamePk,gameDate,teams,away,home,team,id,name,abbreviation,score,isWinner,seriesGameNumber,status,abstractGameState`)
     ]);
     const d = await standRes.json();
     const sched = await schedRes.json();
