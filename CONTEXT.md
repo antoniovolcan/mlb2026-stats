@@ -1,4 +1,4 @@
-# MLB 2026 Stats — CONTEXT (para nueva sesión)
+# MLB 2026 Stats — CONTEXT
 
 ## Lo esencial
 
@@ -32,52 +32,60 @@
 
 | Tab | HTML ID | Qué hace |
 |---|---|---|
-| Equipos | `sec-equipos` | Standings por división, pills W/L últimos 10 juegos con tooltip |
-| Bateadores | `sec-bateadores` | Roster con stats inline, gamelog expandible, desglose por mano |
-| Pitchers | `sec-pitchers` | Roster con stats inline, gamelog expandible |
-| Versus | `sec-versus` | Pitcher vs equipo rival — historial bateador a bateador |
+| Equipos | `sec-equipos` | Standings por división + últimos 10 juegos con pills W/L y tooltip. **Tab por defecto al cargar.** |
+| Bateadores | `sec-bateadores` | Roster con stats inline, gamelog expandible, desglose D/Z por play-by-play |
+| Pitcher vs Equipo | `sec-versus` | Pitcher seleccionado vs bateadores de un equipo rival — historial bateador a bateador |
+| Pitcher vs Pitcher | `sec-pvs` | Dos pitchers lado a lado — stats de toda su carrera por año, gamelog expandible por temporada, box score por partido |
+
+> **Nota:** el antiguo tab "Pitchers" fue eliminado.
 
 ---
 
 ## Columnas de Stats
 
-### PITCH_INLINE — Pitchers (13 cols, sin POS ni QS)
-```
-IP · K · H · R · HR · ERA · WHIP · W · L · G · GS · AVG · OBP · OPS
-```
-Orden de filas: descendente por IP.
-
-### BAT_INLINE — Bateadores (11 cols, sin PA ni POS)
+### BAT_INLINE — Bateadores (11 cols)
 ```
 AB · H · HR · SO · BB · R · RBI · AVG · OBP · SLG · OPS
 ```
 Orden de filas: descendente por AB.
+
+### PVS_COLS — Pitcher vs Pitcher, stats por temporada (10 cols)
+```
+IP · K · H · R · HR · ERA · WHIP · AVG · OBP · OPS
+```
+
+### PVS_GL_MAP — Pitcher vs Pitcher, gamelog por partido
+```
+IP · K · H · R · HR · ERA · BB (slot WHIP) · — · — · —
+```
 
 ---
 
 ## Estado y Caché JS
 
 ```js
-// Pitchers
-let currentTeamId = null;          // 'all' | number
-let rosterCache = {};              // { 'all': [...], [id]: [...] }
-
 // Bateadores
-let currentBatTeamId = 'all';      // 'all' | number
-let currentBatSplit = 'general';   // 'general' | 'vsLeft' | 'vsRight' (sin UI, interno)
-let batRosterCache = {};           // { 'all': [...], [id]: [...] }
-let batStatsCache = {};            // { `${pid}_${split}`: statData }
+let currentBatTeamId = 'all';
+let currentBatSplit = 'general';
+let batRosterCache = {};
+let batStatsCache = {};
+let gameLogCache = {};
+let gameSplitCache = {};
+let openGameLogs = {};
+let openGameSplits = {};
 
-// Gamelogs
-let gameLogCache = {};             // { pid: games[] }
-let gameSplitCache = {};           // { splitId: { R:{ab,h,hr,bb,so,rbi,avg}, L:{...} } }
-let openGameLogs = {};             // { pid: bool }
-let openGameSplits = {};           // { splitId: bool }
-
-// Versus
-let vsPitchersList = [];           // cache global de todos los pitchers
+// Versus (Pitcher vs Equipo)
+let vsPitchersList = [];        // cache global de todos los pitchers (también usado por pvs)
 let vsSelectedPitcherId = null;
 let vsSelectedPitcherName = '';
+
+// Pitcher vs Pitcher
+let pvsA = null;                // { id, name, teamId, team }
+let pvsB = null;
+let pvsCareerCache = {};        // { [pid]: yearByYear splits[] }
+let pvsGameLogCache = {};       // { `${pid}_${year}`: games[] }
+let pvsOpenSeasons = {};        // { `${side}_${pid}_${year}`: bool }
+let pvsBoxScoreCache = {};      // { gamePk: linescoreData }
 ```
 
 ---
@@ -85,49 +93,48 @@ let vsSelectedPitcherName = '';
 ## Funciones JS Clave
 
 ```js
-// Pitchers
-selectAllPitchers()              // API bdfed, sortStat=inningsPitched, carga TODOS
-selectTeam(id)                   // carga pitchers de un equipo por teamId
-renderRoster(roster)             // renderiza tabla de pitchers en #roster-area
-pitcherHTML(p, rank)             // HTML de una fila de pitcher
-togglePitcherLog(pid, name)      // abre/cierra gamelog de un pitcher
-renderPitcherLog(pid, games)     // renderiza las filas del gamelog
-filterPitchers(q)                // filtra [id^="prow-wrap-"] por .bat-name
-
 // Bateadores
-selectAllBatters()               // API bdfed, sortStat=atBats, carga TODOS
-selectBatTeam(id)                // carga bateadores de un equipo
-renderBatRoster(roster)          // renderiza tabla en #bat-roster-area
-batterHTML(p, rank)              // HTML de una fila de bateador
-toggleGameLog(pid, name)         // abre/cierra gamelog de un bateador
-renderGameLog(pid, games)        // renderiza filas del gamelog
-toggleGameSplit(splitId, batterId, gamePk)  // expande desglose D/Z por juego
-parseGameHandSplit(allPlays, batterId)      // parsea play-by-play → { R:{...}, L:{...} }
-renderGameSplit(splitId, sp)     // renderiza el panel D/Z (omite lados sin AB)
-filterBatters(q)                 // filtra [id^="bat-wrap-"] por .bat-name
+selectAllBatters()
+selectBatTeam(id)
+renderBatRoster(roster)
+batterHTML(p, rank)
+toggleGameLog(pid, name)
+renderGameLog(pid, games)
+toggleGameSplit(splitId, batterId, gamePk)
+filterBatters(q)
 
-// Versus
-vsEnsurePitchers()               // carga lista global para autocomplete
-vsPitcherSearch(q)               // filtra dropdown de hasta 12 resultados
+// Versus — Pitcher vs Equipo
+vsEnsurePitchers()             // precarga vsPitchersList al iniciar
+vsPitcherSearch(q)
 vsSelectPitcher(id, name, teamId)
 vsOnOppTeamSelect()
-vsLoadPitcherVsTeam(pitId, oppTeamId)  // fetch historial + render tabla
+vsLoadPitcherVsTeam(pitId, oppTeamId)
 renderVsTeamCard(pit, oppTeam, oppTeamId, results)
 
+// Pitcher vs Pitcher
+pvsSearch(side, q)
+pvsSelect(side, id, name, teamId, team)
+pvsLoadPanel(side, pid, name, teamId, team)   // fetch yearByYear + auto-expande año actual
+pvsBuildPanel(side, pid, name, hand, currentTeam, splits)
+pvsToggleSeason(side, pid, year)              // inserta <tr> reales en la tabla
+pvsToggleBoxScore(gamePk, gameRow, gameData)
+pvsRenderBoxScore(ls, gameData)
+
 // Standings
-buildLast10(teamId, teamGames)   // genera pills W/L con tooltip de juego
-showGameTip(e, pill)             // tooltip flotante de una pill
-hideGameTip()
+loadStandings()                // carga al inicio y al volver a Equipos
+buildLast10(teamId, teamGames)
+showGameTip(e, pill) / hideGameTip()
 
 // Logos
-logoOutlineClass(teamId)         // → 'logo-outline-full' | 'logo-outline-soft'
+logoOutlineClass(teamId)
 const SOFT_OUTLINE_TEAMS = new Set([158,135,145,112,134,143,108])
-// MIL=158, SD=135, CWS=145, CHC=112, PIT=134, PHI=143, LAA=108
 
 // Tooltips de stats
-showStatTip(e, text)             // reutiliza #global-tip con texto plano
-hideStatTip()
-positionTip(e, tip)              // posiciona #global-tip cerca del cursor
+showStatTip(e, text) / hideStatTip() / positionTip(e, tip)
+
+// Middle-click
+// Global mousedown listener: abre bateadores/pitcher en mlb.com/player/{id},
+// tabs con #hash en nueva pestaña
 ```
 
 ---
@@ -135,26 +142,30 @@ positionTip(e, tip)              // posiciona #global-tip cerca del cursor
 ## Clases CSS Importantes
 
 ```
-.bat-row-wrap        → wrapper completo de una fila (incluye gamelog panel)
-.bat-row             → fila clickeable del jugador
-.bat-info            → celda sticky izquierda (nombre, mano)
-.bat-stats           → celda de stats (derecha, scrollable)
-.bat-stat            → un stat (label + valor)
-.bat-stat-lbl        → etiqueta del stat (10px, texto3)
-.bat-stat-val        → valor del stat (Azeret Mono)
-.bat-name            → span del nombre del jugador ← usado por filterPitchers/filterBatters
-.hand-tag.hand-L     → etiqueta Z (zurdo, azul)
-.hand-tag.hand-R     → etiqueta D (derecho, dorado)
-.hand-tag.hand-S     → etiqueta A (switch, verde)
-.gamelog-panel       → panel expandible del gamelog
-.gl-game-wrap        → wrapper de una fila de juego (incluye split panel)
-.gl-split-panel      → panel D/Z expandible dentro de un juego
-.result-pill         → pill W/L (30×30px, font 14px)
-.pill-w              → fondo verde, texto blanco
-.pill-l              → fondo rojo, texto blanco
-.logo-outline-full   → filter drop-shadow blanco 70% (logos oscuros)
-.logo-outline-soft   → filter drop-shadow blanco 22% (logos con blanco)
-[data-stat-tip]      → cursor:help, dispara showStatTip en mouseenter
+// Bateadores / Pitchers (gamelog compartido)
+.bat-row-wrap / .bat-row / .bat-info / .bat-stats
+.bat-stat / .bat-stat-lbl / .bat-stat-val
+.bat-name    ← usado por filterBatters
+.hand-tag.hand-L/R/S  → Z / D / A
+.gamelog-panel / .gl-game-wrap / .gl-split-panel
+.result-pill / .pill-w / .pill-l
+.logo-outline-full / .logo-outline-soft
+
+// Pitcher vs Pitcher
+.pvs-builder / .pvs-side / .pvs-panels / .pvs-panel
+.pvs-panel-header / .pvs-photo / .pvs-player-info
+.pvs-table-wrap / .pvs-table / .pvs-season-row (clickeable)
+.pvs-season-group (tbody) / .pvs-arrow
+.pvs-gl-subheader / .pvs-game-row (clickeable → box score)
+.pvs-game-row-active / .pvs-boxscore-row / .pvs-boxscore
+.pvs-bs-table / .pvs-bs-team / .pvs-bs-scored / .pvs-bs-zero
+.pvs-bs-sep / .pvs-bs-rhe / .pvs-dec-w / .pvs-dec-l
+.pvs-totals
+
+// Post-it
+#postit / #postit-bar / #postit-body / #postit-text
+#postit-toggle-fab / .postit-btn
+#postit.minimized
 ```
 
 ---
@@ -162,57 +173,87 @@ positionTip(e, tip)              // posiciona #global-tip cerca del cursor
 ## IDs HTML Clave
 
 ```
-#roster-area         → contenedor tabla pitchers
-#bat-roster-area     → contenedor tabla bateadores
-#player-search       → input búsqueda pitchers
-#bat-player-search   → input búsqueda bateadores
-#pitcher-team-select → dropdown equipo pitchers
-#bat-team-select     → dropdown equipo bateadores
-#vs-pitcher-search   → input autocomplete pitcher (Versus)
-#vs-pitcher-results  → dropdown resultados autocomplete
-#vs-opp-team         → select equipo rival (Versus)
-#vs-result           → div donde se renderiza la tabla VS
-#global-tip          → div flotante para tooltips (pills y stats)
-#standings-area      → contenedor standings
+#bat-roster-area       → tabla bateadores
+#bat-player-search     → input búsqueda bateadores
+#bat-team-select       → dropdown equipo bateadores
+
+#vs-pitcher-search     → autocomplete pitcher (Pitcher vs Equipo)
+#vs-pitcher-results    → dropdown resultados
+#vs-opp-team           → select equipo rival
+#vs-result             → div resultado tabla VS
+
+#pvs-search-a/b        → autocomplete pitcher A y B
+#pvs-results-a/b       → dropdown resultados A y B
+#pvs-panel-a/b         → paneles de stats carrera
+
+#standings-area        → contenedor standings
+#global-tip            → tooltip flotante global
+#postit                → nota flotante draggable
+#postit-toggle-fab     → botón para reabrir el postit
 ```
 
 ---
 
-## Features Implementados — Estado Actual
+## Features Implementados
 
 ### Equipos
-- Standings por división, todas las divisiones en una sola vista
-- Pills W/L: 30×30px, blancas, 14px, con tooltip flotante (logo, score, fecha, resultado)
-- Logo de cada equipo con outline blanco siguiendo el contorno del SVG
-- Fuente tabla: 14px datos, 15px nombre equipo, 12px headers
+- Standings por división, todas en una sola vista
+- Pills W/L 30×30px con tooltip flotante (logo, score, fecha, resultado)
+- `endDate` del schedule es dinámico → siempre trae el día de hoy
+- Logo con outline blanco contorneando el SVG
 
 ### Bateadores
-- Dropdown: TODOS — MLB o por equipo
-- Buscador en tiempo real por nombre
-- Sin botones de split (eliminados de la UI; `currentBatSplit` siempre 'general')
-- Sin columna POS
-- Mano: Z / D / A
-- Gamelog: últimos 15 juegos, click en fila → desglose D/Z por play-by-play
-  - Si no hubo AB vs un lado → esa fila no aparece
+- Dropdown TODOS — MLB o por equipo
+- Buscador en tiempo real
+- Mano: Z / D / A · sin POS
+- Gamelog: últimos 15 juegos · click en fila → desglose D/Z por play-by-play
 - Tooltips en headers: AVG, OBP, SLG, OPS
 
-### Pitchers
-- Dropdown: TODOS — MLB o por equipo
-- Buscador en tiempo real por nombre
-- Sin columna POS ni QS
-- Mano: Z / D
-- Gamelog: últimos 15 juegos (sin score, sin colores)
-- Tooltips en headers: ERA, WHIP, AVG, OBP, OPS
-
-### Versus
-- Autocomplete pitcher (busca en lista global)
+### Pitcher vs Equipo (`sec-versus`)
+- Autocomplete pitcher (lista global `vsPitchersList`)
 - Select equipo rival (30 equipos)
-- Sin previews superiores (eliminados)
-- Preview: foto pitcher circular VS logo equipo grande + nombre
+- Preview: foto pitcher circular VS logo equipo
 - Tabla: Bateador · Mano · AB · H · HR · BB · SO · AVG · OPS
-  - Columnas POS y OBP eliminadas
-  - Sin historial → atenuados (opacity .45) al final, ordenados por AB
-- Logos con el mismo sistema de outline que standings
+- Sin historial → atenuados al final, ordenados por AB
+
+### Pitcher vs Pitcher (`sec-pvs`)
+- Dos buscadores de pitcher (A y B) con autocomplete
+- Stats de **toda la carrera** separadas por año via `yearByYear`
+- Columnas: AÑO · EQUIPO · IP · K · H · R · HR · ERA · WHIP · AVG · OBP · OPS
+- Temporadas ordenadas descendente (más reciente arriba)
+- **Temporada actual (2026) se auto-expande** al cargar el pitcher
+- Click en temporada → gamelog de esa temporada (más reciente primero)
+  - Gamelog como `<tr>` reales → alineación perfecta con columnas de la tabla
+  - Columnas gamelog: FECHA · OPP · IP · K · H · R · HR · ERA · BB
+  - W en verde, L en rojo
+- Click en partido del gamelog → **box score inning a inning** (1–9 + R H E)
+  - Runs anotadas resaltadas en dorado
+- Fila TOTAL al final de cada panel
+
+### Post-it flotante
+- `position: fixed` → visible en todos los tabs
+- Color azul marino (`#1a3f6e`) con header `#1a5fa8`
+- Draggable desde la barra de título (mouse y touch)
+- **Resize en ambas direcciones** (handle esquina inferior derecha)
+- Minimizable, cerrable (reabre con botón 📌 abajo derecha)
+- Guarda texto, posición y tamaño en `localStorage`
+
+### Actualizaciones automáticas
+- **Fetch interceptor**: añade `?_v=YYYY-MM-DD` a todas las llamadas a APIs de MLB → evita caché HTTP del día anterior
+- **Auto-reload**: cada hora comprueba si cambió la fecha; si sí, recarga la página
+- **Badge de fecha** en el header
+
+### Responsive (mobile)
+- Nav tabs: scroll horizontal
+- Bateadores: tabla con sticky left + scroll horizontal
+- Pitcher vs Equipo: builder apilado, vs-side full width
+- Pitcher vs Pitcher: paneles apilados, tabla con scroll horizontal, box score con scroll
+- Post-it: max-width limitado, resize deshabilitado en touch
+
+### Middle-click
+- Tab del nav → abre sección en nueva pestaña (`#hash`)
+- Fila de bateador → abre `mlb.com/player/{id}` en nueva pestaña
+- Hash en URL al cargar → abre la sección correspondiente
 
 ---
 
@@ -232,5 +273,5 @@ mlb2026-stats/
 
 | # | Feature | Notas |
 |---|---|---|
-| 1 | **Desglose D/Z en gamelog de Pitchers** | Mismo feature que bateadores. Filtrar `matchup.pitcher.id` en play-by-play |
-| 2 | **Mejoras VS** | Historial de AB individuales por bateador |
+| 1 | **Desglose D/Z en gamelog de Bateadores** | Ya implementado |
+| 2 | **Mejoras VS** | Historial de AB individuales por bateador (pendiente) |
