@@ -1664,18 +1664,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 <header class="site-header">
   <div class="logo">MLB<span>Stats 2026</span></div>
   <nav class="nav-tabs">
-    <div class="nav-tab" onclick="showSection('equipos')">Equipos</div>
+    <div class="nav-tab active" onclick="showSection('equipos')">Equipos</div>
     <div class="nav-tab" onclick="showSection('bateadores')">Bateadores</div>
-    <div class="nav-tab active" onclick="showSection('pitchers')">Pitchers</div>
-    <div class="nav-tab" onclick="showSection('versus')">Versus</div>
-    <div class="nav-tab" onclick="showSection('pvs')">Pitcher VS</div>
+    <div class="nav-tab" onclick="showSection('versus')">Pitcher vs Equipo</div>
+    <div class="nav-tab" onclick="showSection('pvs')">Pitcher vs Pitcher</div>
   </nav>
 </header>
 
 <div class="main">
 
   <!-- EQUIPOS -->
-  <div class="section-panel" id="sec-equipos">
+  <div class="section-panel active" id="sec-equipos">
     <div class="section-header">
       <div class="section-title">Tabla de Posiciones</div>
       <span class="live-badge">Temporada 2026</span>
@@ -1710,38 +1709,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   </div>
 
   <!-- PITCHERS -->
-  <div class="section-panel active" id="sec-pitchers">
-    <div class="section-header">
-      <div class="section-title">Pitchers</div>
-      <span class="live-badge">Temporada 2026</span>
-      <div class="split-bar" id="split-bar">
-        <button class="split-btn active" onclick="setSplit('general', this)">General</button>
-        <button class="split-btn" onclick="setSplit('vsLeft', this)">vs Zurdos</button>
-        <button class="split-btn" onclick="setSplit('vsRight', this)">vs Derechos</button>
-      </div>
-    </div>
-
-    <div class="bat-team-selector-wrap">
-      <select class="bat-team-select" id="pitcher-team-select" onchange="handlePitcherTeamChange(this.value)">
-        <option value="all">&#9918; TODOS — MLB</option>
-      </select>
-    </div>
-
-    <div class="player-search-bar">
-      <i class="search-icon">⌕</i>
-      <input class="player-search" id="player-search" placeholder="Buscar pitcher..." oninput="filterPitchers(this.value)">
-      <button class="clear-search" id="clear-search" onclick="clearPlayerSearch()" style="display:none">✕</button>
-    </div>
-
-    <div id="roster-area">
-      <div class="loading-msg"><div class="spinner"></div>Cargando roster...</div>
-    </div>
-  </div>
-
-  <!-- VERSUS -->
+  <!-- PITCHER VS EQUIPO -->
   <div class="section-panel" id="sec-versus">
     <div class="section-header">
-      <div class="section-title">Versus</div>
+      <div class="section-title">Pitcher vs Equipo</div>
       <span class="live-badge">Histórico</span>
     </div>
     <div class="vs-builder">
@@ -1773,7 +1744,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   <!-- PITCHER VS -->
   <div class="section-panel" id="sec-pvs">
     <div class="section-header">
-      <div class="section-title">Pitcher VS</div>
+      <div class="section-title">Pitcher vs Pitcher</div>
       <span class="live-badge">Histórico</span>
     </div>
 
@@ -2235,8 +2206,8 @@ function setSplit(s, btn) {
   renderRoster(rosterCache[pitKey] || []);
 }
 
-// AUTO LOAD FIRST TEAM
-selectAllPitchers();
+// AUTO LOAD: standings al iniciar (sección por defecto es Equipos)
+loadStandings();
 
 // =====================
 // BATEADORES
@@ -3594,7 +3565,7 @@ document.addEventListener('mousedown', e => {
 // Soporte hash en URL al cargar (para pestañas abiertas con middle-click)
 (function () {
   const hash = window.location.hash.replace('#', '');
-  const valid = ['equipos', 'bateadores', 'pitchers', 'versus', 'pvs'];
+  const valid = ['equipos', 'bateadores', 'versus', 'pvs'];
   if (valid.includes(hash)) showSection(hash);
 })();
 
