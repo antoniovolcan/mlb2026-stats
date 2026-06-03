@@ -1812,6 +1812,45 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 </div>
 
 <script>
+// ── CACHE-BUSTER DIARIO + AUTO-RELOAD NOCTURNO ───────────────────────────────
+(function () {
+  // Versión del día: "2026-06-03"  → cambia cada día → el browser no reutiliza
+  // la caché HTTP del día anterior para las APIs de MLB
+  const DAY_VER = new Date().toISOString().slice(0, 10);
+  const MLB_HOSTS = ['statsapi.mlb.com', 'bdfed.stitch.mlbinfra.com', 'img.mlbstatic.com'];
+
+  // Interceptar window.fetch y añadir ?_v=YYYY-MM-DD a todas las llamadas MLB
+  const _fetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    if (typeof url === 'string' && MLB_HOSTS.some(h => url.includes(h))) {
+      url += (url.includes('?') ? '&' : '?') + '_v=' + DAY_VER;
+    }
+    return _fetch(url, opts);
+  };
+
+  // Auto-reload: cada hora comprueba si el día cambió (pestaña abierta de noche)
+  const LOAD_DATE = new Date().toDateString();
+  setInterval(() => {
+    if (new Date().toDateString() !== LOAD_DATE) {
+      window.location.reload();
+    }
+  }, 60 * 60 * 1000); // cada 60 minutos
+
+  // Mostrar badge con la fecha de los datos en el header
+  document.addEventListener('DOMContentLoaded', () => {
+    const badge = document.createElement('span');
+    badge.id = 'data-date-badge';
+    badge.title = 'Datos actualizados al día de hoy';
+    badge.textContent = '📅 ' + new Date().toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
+    badge.style.cssText = `
+      font-size: 10px; font-family: 'Azeret Mono', monospace; color: var(--text3);
+      margin-left: auto; white-space: nowrap; flex-shrink: 0; padding: 0 4px;
+    `;
+    const header = document.querySelector('.site-header');
+    if (header) header.appendChild(badge);
+  });
+})();
+
 // Teams whose logos have white/light elements — use softer outline
 const SOFT_OUTLINE_TEAMS = new Set([158,135,145,112,134,143,108]);
 function logoOutlineClass(teamId) {
