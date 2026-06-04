@@ -672,6 +672,160 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .ab-result.so { color: var(--red); }
 .ab-pitcher-detail { font-size: 11px; color: var(--text3); }
 
+/* JUEGOS */
+.juegos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.juego-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.juego-card:hover { border-color: var(--border2); }
+.juego-card-top {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.juego-time {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+}
+.juego-status {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.juego-status.live   { background: rgba(76,175,130,.18); color: var(--green); border: 1px solid rgba(76,175,130,.3); }
+.juego-status.final  { background: rgba(74,144,217,.12); color: var(--blue);  border: 1px solid rgba(74,144,217,.25); }
+.juego-status.sched  { background: rgba(200,168,75,.1);  color: var(--accent);border: 1px solid rgba(200,168,75,.2); }
+.juego-matchup {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+.juego-team {
+  flex: 1;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.juego-team-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+.juego-team-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.3;
+}
+.juego-team-abbr {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.juego-score {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.juego-score.leader { color: var(--accent); }
+.juego-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.juego-pitchers {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.juego-pitcher-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.juego-pitcher-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.juego-pitcher-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.juego-pitcher-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.juego-pitcher-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 10%;
+  border: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.juego-pitcher-none {
+  font-size: 12px;
+  color: var(--text3);
+  font-style: italic;
+}
+.juego-pitcher-div {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+  margin: 0 2px;
+}
+.juego-venue {
+  padding: 6px 14px;
+  font-size: 10px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.juegos-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text3);
+  font-size: 14px;
+}
+
 /* VS batter detail */
 .vs-bat-row { cursor: pointer; }
 .vs-bat-row:hover { background: var(--bg3); }
@@ -1486,6 +1640,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .pvs-bs-zero { color: var(--text3); }
 /* ── PITCHER VS + POST-IT — RESPONSIVE ── */
 @media (max-width: 768px) {
+  .juegos-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
 
   /* Builder: apilar verticalmente */
   .pvs-builder {
@@ -1672,6 +1830,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   <div class="logo">MLB<span>Stats 2026</span></div>
   <nav class="nav-tabs">
     <div class="nav-tab active" onclick="showSection('equipos')">Equipos</div>
+    <div class="nav-tab" onclick="showSection('juegos')">Juegos</div>
     <div class="nav-tab" onclick="showSection('bateadores')">Bateadores</div>
     <div class="nav-tab" onclick="showSection('versus')">Pitcher vs Equipo</div>
     <div class="nav-tab" onclick="showSection('pvs')">Pitcher vs Pitcher</div>
@@ -1746,6 +1905,19 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 
     <div id="vs-result"></div>
 
+  </div>
+
+  <!-- JUEGOS DEL DÍA -->
+  <div class="section-panel" id="sec-juegos">
+    <div class="section-header">
+      <div class="section-title">Juegos</div>
+      <span class="live-badge" id="juegos-date-badge">HOY</span>
+      <div class="split-bar" style="margin-left:0">
+        <button class="split-btn active" id="juegos-btn-hoy"  onclick="juegosSetDay(0)">HOY</button>
+        <button class="split-btn"        id="juegos-btn-man"  onclick="juegosSetDay(1)">MAÑANA</button>
+      </div>
+    </div>
+    <div id="juegos-area"><div class="loading-msg"><div class="spinner"></div>Cargando juegos...</div></div>
   </div>
 
   <!-- PITCHER VS -->
@@ -1865,6 +2037,7 @@ function showSection(name) {
   document.getElementById('sec-' + name).classList.add('active');
   event.target.classList.add('active');
   if (name === 'equipos') loadStandings();
+  if (name === 'juegos') loadJuegos();
   if (name === 'bateadores' && !batRosterCache['all']) selectAllBatters();
 }
 
@@ -2814,6 +2987,150 @@ function findSplit(splits, keys) {
     const desc = (s.type?.description || s.type || '').toLowerCase();
     return keys.some(k => desc.includes(k.toLowerCase()));
   });
+}
+
+// =====================
+// JUEGOS
+// =====================
+let juegosDay = 0;           // 0 = hoy, 1 = mañana
+let juegosCache = {};        // { 'YYYY-MM-DD': games[] }
+let juegosLoaded = false;
+
+function juegosDateStr(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+
+function juegosSetDay(offset) {
+  juegosDay = offset;
+  document.getElementById('juegos-btn-hoy').classList.toggle('active', offset === 0);
+  document.getElementById('juegos-btn-man').classList.toggle('active', offset === 1);
+  const badge = document.getElementById('juegos-date-badge');
+  if (badge) badge.textContent = offset === 0 ? 'HOY' : 'MAÑANA';
+  loadJuegos();
+}
+
+async function loadJuegos() {
+  const area = document.getElementById('juegos-area');
+  if (!area) return;
+  const dateStr = juegosDateStr(juegosDay);
+
+  if (juegosCache[dateStr]) { renderJuegos(juegosCache[dateStr], dateStr); return; }
+
+  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando juegos del ${dateStr}...</div>`;
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher,linescore&gameType=R`);
+    const d = await res.json();
+    const games = d.dates?.[0]?.games || [];
+    juegosCache[dateStr] = games;
+    renderJuegos(games, dateStr);
+  } catch(e) {
+    area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function juegosStatusInfo(game) {
+  const state = game.status?.abstractGameState || '';
+  const detail = game.status?.detailedState || '';
+  if (state === 'Live') {
+    const inn = game.linescore?.currentInningOrdinal || '';
+    const half = game.linescore?.inningHalf === 'Top' ? '▲' : '▼';
+    return { label: `${half} ${inn}`, cls: 'live' };
+  }
+  if (state === 'Final') return { label: 'Final', cls: 'final' };
+  // Scheduled — show local time
+  const t = new Date(game.gameDate);
+  const timeStr = t.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
+  return { label: timeStr, cls: 'sched' };
+}
+
+function renderJuegos(games, dateStr) {
+  const area = document.getElementById('juegos-area');
+  if (!area) return;
+
+  if (!games.length) {
+    area.innerHTML = `<div class="juegos-empty">⚾ No hay juegos programados para este día.</div>`;
+    return;
+  }
+
+  // Sort by game time
+  const sorted = [...games].sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
+
+  const cards = sorted.map(g => {
+    const away = g.teams.away;
+    const home = g.teams.home;
+    const awayId   = away.team.id;
+    const homeId   = home.team.id;
+    const awayAbbr = away.team.abbreviation || away.team.name.split(' ').pop();
+    const homeAbbr = home.team.abbreviation || home.team.name.split(' ').pop();
+    const awayLogo = `https://www.mlbstatic.com/team-logos/${awayId}.svg`;
+    const homeLogo = `https://www.mlbstatic.com/team-logos/${homeId}.svg`;
+
+    const st = juegosStatusInfo(g);
+    const isLive  = g.status?.abstractGameState === 'Live';
+    const isFinal = g.status?.abstractGameState === 'Final';
+    const showScore = isLive || isFinal;
+    const awayScore = away.score ?? 0;
+    const homeScore = home.score ?? 0;
+    const awayLeads = showScore && awayScore > homeScore;
+    const homeLeads = showScore && homeScore > awayScore;
+
+    // Time label (for top bar)
+    const timeLabel = new Date(g.gameDate).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Probable pitchers
+    const awayPit = away.probablePitcher;
+    const homePit = home.probablePitcher;
+
+    function pitcherHTML(pit, side) {
+      if (!pit) return `<span class="juego-pitcher-none">Por definir</span>`;
+      const photo = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_60,q_auto:best/v1/people/${pit.id}/headshot/67/current`;
+      const safeName = pit.fullName || '—';
+      return `<div class="juego-pitcher-wrap">
+        <img class="juego-pitcher-photo" src="${photo}" alt="${safeName}" onerror="this.style.display='none'">
+        <span class="juego-pitcher-name">${safeName}</span>
+      </div>`;
+    }
+
+    const awayOutlineClass = logoOutlineClass(awayId);
+    const homeOutlineClass = logoOutlineClass(homeId);
+    const venue = g.venue?.name || '';
+
+    return `<div class="juego-card">
+      <div class="juego-card-top">
+        <span class="juego-time">${timeLabel}</span>
+        <span class="juego-status ${st.cls}">${st.label}</span>
+      </div>
+      <div class="juego-matchup">
+        <div class="juego-team">
+          <img class="${awayOutlineClass} juego-team-logo" src="${awayLogo}" alt="${awayAbbr}" onerror="this.style.opacity='.3'">
+          <div class="juego-team-abbr">${awayAbbr}</div>
+          ${showScore ? `<div class="juego-score${awayLeads?' leader':''}">${awayScore}</div>` : ''}
+        </div>
+        <div class="juego-vs">VS</div>
+        <div class="juego-team">
+          <img class="${homeOutlineClass} juego-team-logo" src="${homeLogo}" alt="${homeAbbr}" onerror="this.style.opacity='.3'">
+          <div class="juego-team-abbr">${homeAbbr}</div>
+          ${showScore ? `<div class="juego-score${homeLeads?' leader':''}">${homeScore}</div>` : ''}
+        </div>
+      </div>
+      <div class="juego-pitchers">
+        <div class="juego-pitcher-side">
+          <div class="juego-pitcher-lbl">Visitante</div>
+          ${pitcherHTML(awayPit, 'away')}
+        </div>
+        <div class="juego-pitcher-div"></div>
+        <div class="juego-pitcher-side">
+          <div class="juego-pitcher-lbl">Local</div>
+          ${pitcherHTML(homePit, 'home')}
+        </div>
+      </div>
+      ${venue ? `<div class="juego-venue">📍 ${venue}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  area.innerHTML = `<div class="juegos-grid">${cards}</div>`;
 }
 
 // =====================
