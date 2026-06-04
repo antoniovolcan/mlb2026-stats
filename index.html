@@ -3564,11 +3564,11 @@ async function pvsLoadPanel(side, pid, name, teamId, team) {
       splits = (d.stats?.[0]?.splits || []).filter(s => s.stat?.inningsPitched && parseFloat(s.stat.inningsPitched) > 0);
       pvsCareerCache[pid] = splits;
     }
-    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam`);
+    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam,id,name`);
     const infoD   = await infoRes.json();
-    const hand    = infoD.people?.[0]?.pitchHand?.code || '?';
-    const curTeam = infoD.people?.[0]?.currentTeam?.name || team || '—';
-    panel.innerHTML = pvsBuildPanel(side, pid, name, hand, curTeam, splits);
+    const hand       = infoD.people?.[0]?.pitchHand?.code || '';
+    const curTeamId  = infoD.people?.[0]?.currentTeam?.id  || teamId || 0;
+    panel.innerHTML = pvsBuildPanel(side, pid, name, hand, curTeamId, splits);
     // Auto-expand temporada actual
     const curYear = new Date().getFullYear().toString();
     if (splits.some(s => s.season === curYear)) pvsToggleSeason(side, pid, curYear);
@@ -3577,18 +3577,22 @@ async function pvsLoadPanel(side, pid, name, teamId, team) {
   }
 }
 
-function pvsBuildPanel(side, pid, name, hand, currentTeam, splits) {
-  const handLabel = hand === 'L' ? 'Z' : hand === 'R' ? 'D' : hand;
-  const photoUrl  = `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_100/v1/people/${pid}/headshot/milb/current`;
+function pvsBuildPanel(side, pid, name, hand, curTeamId, splits) {
+  const handLabel  = hand === 'L' ? 'Z' : hand === 'R' ? 'D' : '';
+  const handCls    = hand === 'L' ? 'hand-L' : hand === 'R' ? 'hand-R' : '';
+  const handTag    = handLabel ? `<span class="hand-tag ${handCls}" style="font-size:11px;padding:2px 6px;margin-left:6px">${handLabel}</span>` : '';
+  const photoUrl   = `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_100/v1/people/${pid}/headshot/milb/current`;
+  const teamLogo   = curTeamId ? `https://www.mlbstatic.com/team-logos/${curTeamId}.svg` : '';
+  const logoOutCls = curTeamId ? logoOutlineClass(curTeamId) : '';
 
   const header = `
     <div class="pvs-panel-header">
       <img class="pvs-photo" src="${photoUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="pvs-photo-placeholder" style="display:none">⚾</div>
       <div class="pvs-player-info">
-        <div class="pvs-player-name">${name}</div>
-        <div class="pvs-player-meta">${currentTeam} · <span class="hand-tag hand-${hand}" style="font-size:10px;padding:1px 5px">${handLabel}</span></div>
+        <div class="pvs-player-name" style="display:flex;align-items:center">${name}${handTag}</div>
       </div>
+      ${teamLogo ? `<img class="${logoOutCls}" style="width:52px;height:52px;object-fit:contain;margin-left:auto;flex-shrink:0" src="${teamLogo}" alt="">` : ''}
     </div>`;
 
   if (!splits.length) return header + `<div class="pvs-empty" style="padding:30px 20px"><span>Sin datos históricos disponibles</span></div>`;
