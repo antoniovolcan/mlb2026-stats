@@ -1705,11 +1705,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   /* Fila TOTAL: más compacta */
   .pvs-totals td { padding: 5px 8px; }
 
-  /* Post-it: limitar ancho, deshabilitar resize (touch no lo soporta) */
-  #postit {
-    max-width: calc(100vw - 20px) !important;
-    resize: none !important;
-  }
 }
 
 @media (max-width: 480px) {
@@ -1728,121 +1723,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   .pvs-bs-table td       { padding: 6px 6px; }
   .pvs-bs-sep { padding-left: 10px !important; }
 
-  /* Post-it: full width en pantallas muy pequeñas */
-  #postit { width: calc(100vw - 20px) !important; }
 }
 
-/* ── POST-IT FLOTANTE ── */
-#postit {
-  position: fixed;
-  width: 240px;
-  min-width: 190px;
-  max-width: 640px;
-  min-height: 40px;
-  background: #1a3f6e;
-  border-radius: 6px;
-  box-shadow: 3px 3px 14px rgba(0,0,0,.55), 0 0 0 1px rgba(74,144,217,.25);
-  z-index: 9999;
-  font-family: 'Sora', sans-serif;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  resize: both;
-  overflow: hidden;
-  transition: box-shadow .15s;
-}
-#postit:hover { box-shadow: 4px 4px 20px rgba(0,0,0,.65), 0 0 0 1px rgba(74,144,217,.4); }
-#postit-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 8px 4px;
-  background: #1a5fa8;
-  border-radius: 6px 6px 0 0;
-  cursor: grab;
-  flex-shrink: 0;
-  border-bottom: 1px solid rgba(74,144,217,.3);
-}
-#postit-bar:active { cursor: grabbing; }
-#postit-bar-left { display: flex; align-items: center; gap: 5px; }
-#postit-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: #c8e0f8;
-  letter-spacing: .5px;
-  text-transform: uppercase;
-}
-#postit-actions { display: flex; gap: 2px; }
-.postit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 5px;
-  border-radius: 3px;
-  font-size: 12px;
-  color: #c8e0f8;
-  line-height: 1;
-  transition: background .1s;
-}
-.postit-btn:hover { background: rgba(255,255,255,.15); }
-#postit-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-#postit-text {
-  width: 100%;
-  flex: 1;
-  min-height: 80px;
-  background: transparent;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 9px 11px;
-  font-family: 'Sora', sans-serif;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: #c8e0f8;
-  box-sizing: border-box;
-}
-#postit-text::placeholder { color: #4a7aaa; }
-#postit.minimized #postit-body { display: none; }
-#postit.minimized { resize: none; min-height: 0; }
-#postit-toggle-fab {
-  position: fixed;
-  z-index: 9998;
-  background: #1a5fa8;
-  border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 2px 2px 8px rgba(0,0,0,.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  transition: transform .15s;
-}
-#postit-toggle-fab:hover { transform: scale(1.1); }
 </style>
 </head>
 <body>
 
-<!-- POST-IT FLOTANTE -->
-<div id="postit">
-  <div id="postit-bar">
-    <div id="postit-bar-left">
-      <span>📌</span>
-      <span id="postit-label">Notas</span>
-    </div>
-    <div id="postit-actions">
-      <button class="postit-btn" id="postit-min-btn" title="Minimizar">—</button>
-      <button class="postit-btn" id="postit-clear-btn" title="Limpiar">🗑</button>
-      <button class="postit-btn" id="postit-close-btn" title="Cerrar">✕</button>
-    </div>
-  </div>
-  <div id="postit-body">
-    <textarea id="postit-text" placeholder="Escribe tus notas aquí..."></textarea>
-  </div>
-</div>
-<button id="postit-toggle-fab" title="Abrir notas">📌</button>
 
 <header class="site-header">
   <div class="logo">MLB<span>Stats 2026</span></div>
@@ -2049,15 +1935,30 @@ let rosterCache = {};
 let statsCache = {};
 
 // SECTION NAV
-function showSection(name) {
+function showSection(name, pushState = true) {
   document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
-  event.target.classList.add('active');
+  // Marcar tab activo (event puede no existir si se llama programáticamente)
+  if (typeof event !== 'undefined' && event?.target?.classList) {
+    event.target.classList.add('active');
+  } else {
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      const m = (t.getAttribute('onclick') || '').match(/showSection\('(\w+)'\)/);
+      if (m && m[1] === name) t.classList.add('active');
+    });
+  }
+  if (pushState) history.pushState({ section: name }, '', '#' + name);
   if (name === 'equipos') loadStandings();
   if (name === 'juegos') loadJuegos();
   if (name === 'bateadores' && !batRosterCache['all']) selectAllBatters();
 }
+
+// Botón atrás del navegador
+window.addEventListener('popstate', e => {
+  const name = e.state?.section || location.hash.replace('#', '') || 'equipos';
+  showSection(name, false);
+});
 
 // PITCHER TEAM SELECT
 function initPitcherTeamSelect() {
@@ -3157,14 +3058,7 @@ function renderJuegos(games, dateStr) {
 }
 
 function juegosGoPvs(aPitId, aPitName, aTeamId, aTeam, bPitId, bPitName, bTeamId, bTeam) {
-  // Navegar al tab PVS
-  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('sec-pvs').classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t => {
-    if (t.textContent.trim() === 'Pitcher vs Pitcher') t.classList.add('active');
-  });
-  // Cargar ambos pitchers
+  showSection('pvs');
   pvsSelect('a', aPitId, aPitName, aTeamId, aTeam);
   pvsSelect('b', bPitId, bPitName, bTeamId, bTeam);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3564,7 +3458,7 @@ async function pvsLoadPanel(side, pid, name, teamId, team) {
       splits = (d.stats?.[0]?.splits || []).filter(s => s.stat?.inningsPitched && parseFloat(s.stat.inningsPitched) > 0);
       pvsCareerCache[pid] = splits;
     }
-    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?fields=people,fullName,pitchHand,currentTeam,id,name`);
+    const infoRes = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}?hydrate=currentTeam`);
     const infoD   = await infoRes.json();
     const hand       = infoD.people?.[0]?.pitchHand?.code || '';
     const curTeamId  = infoD.people?.[0]?.currentTeam?.id  || teamId || 0;
@@ -3873,148 +3767,6 @@ function pvsRenderBoxScore(ls, gameData) {
   return `<table class="pvs-bs-table">${thead}${tbody}</table>`;
 }
 
-// ── POST-IT FLOTANTE ──────────────────────────────────────────────────────────
-(function () {
-  const pi      = document.getElementById('postit');
-  const bar     = document.getElementById('postit-bar');
-  const textarea= document.getElementById('postit-text');
-  const minBtn  = document.getElementById('postit-min-btn');
-  const clearBtn= document.getElementById('postit-clear-btn');
-  const closeBtn= document.getElementById('postit-close-btn');
-  const fab     = document.getElementById('postit-toggle-fab');
-
-  const LS_POS  = 'postit_pos';
-  const LS_TEXT = 'postit_text';
-  const LS_MIN  = 'postit_min';
-  const LS_VIS  = 'postit_vis';
-
-  // Restaurar estado
-  const savedText = localStorage.getItem(LS_TEXT) || '';
-  const savedMin  = localStorage.getItem(LS_MIN) === '1';
-  const savedVis  = localStorage.getItem(LS_VIS);   // null = visible por defecto
-  const savedPos  = (() => { try { return JSON.parse(localStorage.getItem(LS_POS)); } catch(e){return null;} })();
-
-  textarea.value = savedText;
-
-  // Posición y tamaño iniciales
-  if (savedPos) {
-    pi.style.left = savedPos.left + 'px';
-    pi.style.top  = savedPos.top  + 'px';
-    if (savedPos.w) pi.style.width  = savedPos.w + 'px';
-    if (savedPos.h) pi.style.height = savedPos.h + 'px';
-  } else {
-    pi.style.right = '20px';
-    pi.style.top   = '80px';
-  }
-
-  // Minimizar
-  function setMinimized(v) {
-    pi.classList.toggle('minimized', v);
-    minBtn.textContent = v ? '□' : '—';
-    localStorage.setItem(LS_MIN, v ? '1' : '0');
-  }
-  setMinimized(savedMin);
-
-  // Visibilidad
-  function setVisible(v) {
-    pi.style.display  = v ? 'flex' : 'none';
-    fab.style.display = v ? 'none' : 'flex';
-    localStorage.setItem(LS_VIS, v ? '1' : '0');
-  }
-  // Por defecto visible (primera vez: savedVis===null → visible)
-  setVisible(savedVis !== '0');
-
-  minBtn.addEventListener('click',   () => setMinimized(!pi.classList.contains('minimized')));
-  closeBtn.addEventListener('click', () => setVisible(false));
-  fab.addEventListener('click',      () => { setVisible(true); setMinimized(false); });
-  clearBtn.addEventListener('click', () => {
-    if (confirm('¿Limpiar la nota?')) { textarea.value = ''; localStorage.removeItem(LS_TEXT); }
-  });
-
-  // Guardar texto
-  textarea.addEventListener('input', () => localStorage.setItem(LS_TEXT, textarea.value));
-
-  // Drag
-  let dragging = false, ox = 0, oy = 0;
-
-  bar.addEventListener('mousedown', e => {
-    if (e.target === minBtn || e.target === clearBtn || e.target === closeBtn) return;
-    dragging = true;
-    const rect = pi.getBoundingClientRect();
-    // Asegurar que usamos left/top (no right)
-    pi.style.right = 'auto';
-    pi.style.left  = rect.left + 'px';
-    pi.style.top   = rect.top  + 'px';
-    ox = e.clientX - rect.left;
-    oy = e.clientY - rect.top;
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    let nx = e.clientX - ox;
-    let ny = e.clientY - oy;
-    // Mantener dentro de la ventana
-    nx = Math.max(0, Math.min(nx, window.innerWidth  - pi.offsetWidth));
-    ny = Math.max(0, Math.min(ny, window.innerHeight - pi.offsetHeight));
-    pi.style.left = nx + 'px';
-    pi.style.top  = ny + 'px';
-  });
-
-  function savePos() {
-    localStorage.setItem(LS_POS, JSON.stringify({
-      left: parseInt(pi.style.left) || 0,
-      top:  parseInt(pi.style.top)  || 0,
-      w: pi.offsetWidth,
-      h: pi.offsetHeight
-    }));
-  }
-
-  document.addEventListener('mouseup', () => {
-    if (!dragging) return;
-    dragging = false;
-    savePos();
-  });
-
-  // Guardar tamaño al redimensionar con el handle nativo
-  if (window.ResizeObserver) {
-    let resizeTimer;
-    new ResizeObserver(() => {
-      if (dragging) return; // no interferir con drag
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(savePos, 200);
-    }).observe(pi);
-  }
-
-  // Touch drag (móvil)
-  bar.addEventListener('touchstart', e => {
-    if (e.target === minBtn || e.target === clearBtn || e.target === closeBtn) return;
-    const t = e.touches[0];
-    const rect = pi.getBoundingClientRect();
-    pi.style.right = 'auto';
-    pi.style.left  = rect.left + 'px';
-    pi.style.top   = rect.top  + 'px';
-    ox = t.clientX - rect.left;
-    oy = t.clientY - rect.top;
-  }, { passive: true });
-
-  bar.addEventListener('touchmove', e => {
-    const t = e.touches[0];
-    let nx = t.clientX - ox;
-    let ny = t.clientY - oy;
-    nx = Math.max(0, Math.min(nx, window.innerWidth  - pi.offsetWidth));
-    ny = Math.max(0, Math.min(ny, window.innerHeight - pi.offsetHeight));
-    pi.style.left = nx + 'px';
-    pi.style.top  = ny + 'px';
-    e.preventDefault();
-  }, { passive: false });
-
-  bar.addEventListener('touchend', savePos);
-
-  // Posicionar FAB cerca del postit cuando está cerrado
-  fab.style.bottom = '24px';
-  fab.style.right  = '24px';
-})();
 
 // ── MIDDLE-CLICK: abrir en nueva pestaña ─────────────────────────────────────
 document.addEventListener('mousedown', e => {
