@@ -825,6 +825,24 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   color: var(--text3);
   font-size: 14px;
 }
+.juego-pvs-btn {
+  width: 100%;
+  padding: 8px 14px;
+  background: rgba(200,168,75,.1);
+  border: 1px solid rgba(200,168,75,.3);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: 'Sora', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.juego-pvs-btn:hover {
+  background: rgba(200,168,75,.2);
+  border-color: rgba(200,168,75,.5);
+}
 
 /* VS batter detail */
 .vs-bat-row { cursor: pointer; }
@@ -3126,11 +3144,30 @@ function renderJuegos(games, dateStr) {
           ${pitcherHTML(homePit, 'home')}
         </div>
       </div>
+      ${awayPit && homePit ? `<div style="padding:8px 14px 0;display:flex;justify-content:center">
+        <button class="juego-pvs-btn" onclick="juegosGoPvs(${awayPit.id},'${(awayPit.fullName||'').replace(/'/g,"\\'")}',${awayId},'${awayAbbr}',${homePit.id},'${(homePit.fullName||'').replace(/'/g,"\\'")}',${homeId},'${homeAbbr}')">
+          ⚔ Comparar Pitchers
+        </button>
+      </div>` : ''}
       ${venue ? `<div class="juego-venue">📍 ${venue}</div>` : ''}
     </div>`;
   }).join('');
 
   area.innerHTML = `<div class="juegos-grid">${cards}</div>`;
+}
+
+function juegosGoPvs(aPitId, aPitName, aTeamId, aTeam, bPitId, bPitName, bTeamId, bTeam) {
+  // Navegar al tab PVS
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-pvs').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.textContent.trim() === 'Pitcher vs Pitcher') t.classList.add('active');
+  });
+  // Cargar ambos pitchers
+  pvsSelect('a', aPitId, aPitName, aTeamId, aTeam);
+  pvsSelect('b', bPitId, bPitName, bTeamId, bTeam);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // =====================
