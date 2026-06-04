@@ -825,6 +825,46 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   color: var(--text3);
   font-size: 14px;
 }
+/* Estrella favorito */
+.juego-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--border2);
+  padding: 0 2px;
+  margin-left: auto;
+  line-height: 1;
+  transition: color .15s, transform .15s;
+}
+.juego-star:hover  { color: var(--accent2); transform: scale(1.2); }
+.juego-star.active { color: var(--accent); }
+/* Card favorita */
+.juego-card.juego-fav { border-color: rgba(200,168,75,.45); }
+/* Tira live */
+.juego-live-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(76,175,130,.08);
+  border-bottom: 1px solid rgba(76,175,130,.18);
+  font-size: 12px;
+}
+.jls-inn  { font-family: 'Azeret Mono', monospace; font-weight: 600; color: var(--green); min-width: 50px; }
+.jls-outs { color: var(--text2); font-size: 11px; min-width: 42px; }
+/* Diamante de bases */
+.bd-wrap  { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-left: auto; }
+.bd-row   { display: flex; gap: 3px; }
+.bd-base  {
+  width: 9px; height: 9px;
+  background: var(--border2);
+  transform: rotate(45deg);
+  display: inline-block;
+  border-radius: 1px;
+  transition: background .2s;
+}
+.bd-base.on { background: var(--accent); }
 .juego-pvs-btn {
   width: 100%;
   padding: 8px 14px;
@@ -1936,6 +1976,7 @@ let statsCache = {};
 
 // SECTION NAV
 function showSection(name, pushState = true) {
+  if (name !== 'juegos') juegosStopRefresh();
   document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
@@ -2911,9 +2952,10 @@ function findSplit(splits, keys) {
 // =====================
 // JUEGOS
 // =====================
-let juegosDay = 0;           // 0 = hoy, 1 = mañana
-let juegosCache = {};        // { 'YYYY-MM-DD': games[] }
-let juegosLoaded = false;
+let juegosDay = 0;
+let juegosCache = {};
+let juegosRefreshInterval = null;
+let juegosFavs = new Set(JSON.parse(localStorage.getItem('mlb_fav_games') || '[]'));
 
 function juegosDateStr(offset) {
   const d = new Date();
@@ -2927,41 +2969,94 @@ function juegosSetDay(offset) {
   document.getElementById('juegos-btn-man').classList.toggle('active', offset === 1);
   const badge = document.getElementById('juegos-date-badge');
   if (badge) badge.textContent = offset === 0 ? 'HOY' : 'MAÑANA';
+  delete juegosCache[juegosDateStr(offset)]; // forzar refetch al cambiar día
   loadJuegos();
 }
 
-async function loadJuegos() {
+function toggleJuegoFav(gamePk, btn) {
+  const key = String(gamePk);
+  if (juegosFavs.has(key)) { juegosFavs.delete(key); }
+  else                      { juegosFavs.add(key); }
+  localStorage.setItem('mlb_fav_games', JSON.stringify([...juegosFavs]));
+  // Re-render sin fetch
+  const dateStr = juegosDateStr(juegosDay);
+  if (juegosCache[dateStr]) renderJuegos(juegosCache[dateStr], dateStr);
+}
+
+function juegosStopRefresh() {
+  if (juegosRefreshInterval) { clearInterval(juegosRefreshInterval); juegosRefreshInterval = null; }
+}
+
+async function loadJuegos(force = false) {
   const area = document.getElementById('juegos-area');
   if (!area) return;
   const dateStr = juegosDateStr(juegosDay);
 
-  if (juegosCache[dateStr]) { renderJuegos(juegosCache[dateStr], dateStr); return; }
+  if (!force && juegosCache[dateStr]) { renderJuegos(juegosCache[dateStr], dateStr); return; }
 
-  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando juegos del ${dateStr}...</div>`;
+  if (!force) area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Cargando juegos del ${dateStr}...</div>`;
   try {
     const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher,linescore&gameType=R`);
     const d = await res.json();
     const games = d.dates?.[0]?.games || [];
     juegosCache[dateStr] = games;
     renderJuegos(games, dateStr);
+
+    // Auto-refresh si hay juegos en vivo
+    const hasLive = games.some(g => g.status?.abstractGameState === 'Live');
+    if (hasLive && !juegosRefreshInterval) {
+      juegosRefreshInterval = setInterval(() => {
+        if (document.getElementById('sec-juegos')?.classList.contains('active')) {
+          loadJuegos(true);
+        } else {
+          juegosStopRefresh();
+        }
+      }, 30000);
+    } else if (!hasLive) {
+      juegosStopRefresh();
+    }
   } catch(e) {
-    area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+    if (!force) area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
   }
+}
+
+function juegosLiveStrip(game) {
+  const ls = game.linescore || {};
+  const half    = ls.inningHalf === 'Top' ? '▲' : '▼';
+  const innNum  = ls.currentInning || '';
+  const innOrd  = ls.currentInningOrdinal || '';
+  const outs    = ls.outs ?? 0;
+  const offense = ls.offense || {};
+  const b1 = !!offense.first;
+  const b2 = !!offense.second;
+  const b3 = !!offense.third;
+
+  const outsLabel = outs === 1 ? '1 out' : `${outs} outs`;
+
+  // Diamond: top=2B, bottom-left=3B, bottom-right=1B
+  const baseDiamond = `<div class="bd-wrap">
+    <div class="bd-row"><span class="bd-base ${b2?'on':''}"></span></div>
+    <div class="bd-row"><span class="bd-base ${b3?'on':''}"></span><span class="bd-base ${b1?'on':''}"></span></div>
+  </div>`;
+
+  return `<div class="juego-live-strip">
+    <span class="jls-inn">${half} ${innOrd}</span>
+    <span class="jls-outs">${outsLabel}</span>
+    ${baseDiamond}
+  </div>`;
 }
 
 function juegosStatusInfo(game) {
   const state = game.status?.abstractGameState || '';
-  const detail = game.status?.detailedState || '';
   if (state === 'Live') {
-    const inn = game.linescore?.currentInningOrdinal || '';
-    const half = game.linescore?.inningHalf === 'Top' ? '▲' : '▼';
-    return { label: `${half} ${inn}`, cls: 'live' };
+    const ls = game.linescore || {};
+    const half = ls.inningHalf === 'Top' ? '▲' : '▼';
+    return { label: `${half}${ls.currentInning || ''}`, cls: 'live', isLive: true };
   }
-  if (state === 'Final') return { label: 'Final', cls: 'final' };
-  // Scheduled — show local time
+  if (state === 'Final') return { label: 'Final', cls: 'final', isLive: false };
   const t = new Date(game.gameDate);
   const timeStr = t.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
-  return { label: timeStr, cls: 'sched' };
+  return { label: timeStr, cls: 'sched', isLive: false };
 }
 
 function renderJuegos(games, dateStr) {
@@ -2973,8 +3068,13 @@ function renderJuegos(games, dateStr) {
     return;
   }
 
-  // Sort by game time
-  const sorted = [...games].sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
+  // Ordenar: favoritos primero, luego por hora
+  const sorted = [...games].sort((a, b) => {
+    const aFav = juegosFavs.has(String(a.gamePk)) ? 0 : 1;
+    const bFav = juegosFavs.has(String(b.gamePk)) ? 0 : 1;
+    if (aFav !== bFav) return aFav - bFav;
+    return new Date(a.gameDate) - new Date(b.gameDate);
+  });
 
   const cards = sorted.map(g => {
     const away = g.teams.away;
@@ -2986,50 +3086,48 @@ function renderJuegos(games, dateStr) {
     const awayLogo = `https://www.mlbstatic.com/team-logos/${awayId}.svg`;
     const homeLogo = `https://www.mlbstatic.com/team-logos/${homeId}.svg`;
 
-    const st = juegosStatusInfo(g);
-    const isLive  = g.status?.abstractGameState === 'Live';
-    const isFinal = g.status?.abstractGameState === 'Final';
+    const st       = juegosStatusInfo(g);
+    const isLive   = g.status?.abstractGameState === 'Live';
+    const isFinal  = g.status?.abstractGameState === 'Final';
     const showScore = isLive || isFinal;
     const awayScore = away.score ?? 0;
     const homeScore = home.score ?? 0;
     const awayLeads = showScore && awayScore > homeScore;
     const homeLeads = showScore && homeScore > awayScore;
-
-    // Time label (for top bar)
     const timeLabel = new Date(g.gameDate).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const awayPit  = away.probablePitcher;
+    const homePit  = home.probablePitcher;
+    const isFav    = juegosFavs.has(String(g.gamePk));
 
-    // Probable pitchers
-    const awayPit = away.probablePitcher;
-    const homePit = home.probablePitcher;
-
-    function pitcherHTML(pit, side) {
+    function pitcherHTML(pit) {
       if (!pit) return `<span class="juego-pitcher-none">Por definir</span>`;
       const photo = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_60,q_auto:best/v1/people/${pit.id}/headshot/67/current`;
-      const safeName = pit.fullName || '—';
       return `<div class="juego-pitcher-wrap">
-        <img class="juego-pitcher-photo" src="${photo}" alt="${safeName}" onerror="this.style.display='none'">
-        <span class="juego-pitcher-name">${safeName}</span>
+        <img class="juego-pitcher-photo" src="${photo}" alt="${pit.fullName||''}" onerror="this.style.display='none'">
+        <span class="juego-pitcher-name">${pit.fullName||'—'}</span>
       </div>`;
     }
 
-    const awayOutlineClass = logoOutlineClass(awayId);
-    const homeOutlineClass = logoOutlineClass(homeId);
-    const venue = g.venue?.name || '';
+    const awayOC = logoOutlineClass(awayId);
+    const homeOC = logoOutlineClass(homeId);
+    const venue  = g.venue?.name || '';
 
-    return `<div class="juego-card">
+    return `<div class="juego-card${isFav?' juego-fav':''}">
       <div class="juego-card-top">
         <span class="juego-time">${timeLabel}</span>
         <span class="juego-status ${st.cls}">${st.label}</span>
+        <button class="juego-star${isFav?' active':''}" onclick="toggleJuegoFav(${g.gamePk}, this)" title="${isFav?'Quitar favorito':'Marcar favorito'}">★</button>
       </div>
+      ${isLive ? juegosLiveStrip(g) : ''}
       <div class="juego-matchup">
         <div class="juego-team">
-          <img class="${awayOutlineClass} juego-team-logo" src="${awayLogo}" alt="${awayAbbr}" onerror="this.style.opacity='.3'">
+          <img class="${awayOC} juego-team-logo" src="${awayLogo}" alt="${awayAbbr}" onerror="this.style.opacity='.3'">
           <div class="juego-team-abbr">${awayAbbr}</div>
           ${showScore ? `<div class="juego-score${awayLeads?' leader':''}">${awayScore}</div>` : ''}
         </div>
         <div class="juego-vs">VS</div>
         <div class="juego-team">
-          <img class="${homeOutlineClass} juego-team-logo" src="${homeLogo}" alt="${homeAbbr}" onerror="this.style.opacity='.3'">
+          <img class="${homeOC} juego-team-logo" src="${homeLogo}" alt="${homeAbbr}" onerror="this.style.opacity='.3'">
           <div class="juego-team-abbr">${homeAbbr}</div>
           ${showScore ? `<div class="juego-score${homeLeads?' leader':''}">${homeScore}</div>` : ''}
         </div>
@@ -3037,12 +3135,12 @@ function renderJuegos(games, dateStr) {
       <div class="juego-pitchers">
         <div class="juego-pitcher-side">
           <div class="juego-pitcher-lbl">Visitante</div>
-          ${pitcherHTML(awayPit, 'away')}
+          ${pitcherHTML(awayPit)}
         </div>
         <div class="juego-pitcher-div"></div>
         <div class="juego-pitcher-side">
           <div class="juego-pitcher-lbl">Local</div>
-          ${pitcherHTML(homePit, 'home')}
+          ${pitcherHTML(homePit)}
         </div>
       </div>
       ${awayPit && homePit ? `<div style="padding:8px 14px 0;display:flex;justify-content:center">
