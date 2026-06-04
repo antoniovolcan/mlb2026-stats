@@ -672,6 +672,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .ab-result.so { color: var(--red); }
 .ab-pitcher-detail { font-size: 11px; color: var(--text3); }
 
+/* VS batter detail */
+.vs-bat-row { cursor: pointer; }
+.vs-bat-row:hover { background: var(--bg3); }
+.vs-expand-arrow { font-size: 10px; color: var(--text3); margin-right: 4px; display: inline-block; width: 10px; }
+.vs-detail-panel { background: var(--bg3); }
+.vs-detail-tr:hover { background: rgba(255,255,255,.03); }
+
 /* SECTION PANELS */
 .section-panel { display: none; }
 .section-panel.active { display: block; }
@@ -2815,6 +2822,9 @@ function findSplit(splits, keys) {
 let vsPitchersList = [];
 let vsSelectedPitcherId = null;
 let vsSelectedPitcherName = '';
+let vsGLCache = {};      // { pitId: [{gamePk, date}] }
+let vsPBPCache = {};     // { gamePk: allPlays[] }
+let vsOpenBatters = {};  // { uid: bool }
 
 function vsInitTeams() {
   const opts = MLB_TEAMS.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
@@ -2900,6 +2910,7 @@ async function vsLoadPitcherVsTeam(pitId, oppTeamId) {
         const stat = d.people?.[0]?.stats?.[0]?.splits?.[0]?.stat || {};
         const batSide = d.people?.[0]?.batSide?.code || '?';
         return {
+          playerId: b.playerId,
           name: `${b.playerFirstName} ${b.playerLastName}`,
           pos: b.primaryPositionAbbrev || '—',
           batSide,
@@ -2912,7 +2923,7 @@ async function vsLoadPitcherVsTeam(pitId, oppTeamId) {
           obp: stat.onBasePercentage ? parseFloat(stat.onBasePercentage).toFixed(3) : '—',
           ops: stat.ops ? parseFloat(stat.ops).toFixed(3) : '—',
         };
-      } catch { return { name:`${b.playerFirstName} ${b.playerLastName}`, pos:b.primaryPositionAbbrev||'—', batSide:'?', ab:0, h:'—', hr:'—', bb:'—', so:'—', avg:'—', obp:'—', ops:'—' }; }
+      } catch { return { playerId: b.playerId, name:`${b.playerFirstName} ${b.playerLastName}`, pos:b.primaryPositionAbbrev||'—', batSide:'?', ab:0, h:'—', hr:'—', bb:'—', so:'—', avg:'—', obp:'—', ops:'—' }; }
     }));
 
     const oppTeam = MLB_TEAMS.find(t => t.id == oppTeamId);
@@ -2934,14 +2945,23 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
     const hl = b.batSide === 'L' ? 'Z' : b.batSide === 'S' ? 'A' : 'D';
     const avgNum = parseFloat(b.avg);
     const avgCls = b.avg !== '—' && avgNum >= 0.300 ? 'good' : b.avg !== '—' && avgNum < 0.200 && b.ab > 3 ? 'bad' : '';
-    return `<tr class="st-tr" style="${b.ab===0?'opacity:.45':''}">
-      <td class="st-td" style="text-align:left;padding-left:12px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;min-width:160px">${i+1}. ${b.name}</td>
+    const uid = `${pit.id}_${b.playerId || i}`;
+    const safeName = (b.name || '').replace(/'/g, "\\'");
+    return `<tr class="st-tr vs-bat-row" style="${b.ab===0?'opacity:.45':''}" onclick="vsToggleBatterDetail('${uid}', ${b.playerId || 0}, '${safeName}', ${pit.id})">
+      <td class="st-td" style="text-align:left;padding-left:12px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;min-width:160px">
+        <span class="vs-expand-arrow" id="vs-arr-${uid}">▾</span> ${i+1}. ${b.name}
+      </td>
       <td class="st-td"><span class="hand-tag ${hc}">${hl}</span></td>
       <td class="st-td wl-bold">${b.ab||'—'}</td>
       <td class="st-td">${b.h}</td><td class="st-td">${b.hr}</td>
       <td class="st-td">${b.bb}</td><td class="st-td">${b.so}</td>
       <td class="st-td ${avgCls}" style="font-weight:600">${b.avg}</td>
       <td class="st-td">${b.ops}</td>
+    </tr>
+    <tr id="vs-detail-${uid}" style="display:none">
+      <td colspan="9" style="padding:0;background:var(--bg3);border-bottom:1px solid var(--border)">
+        <div class="vs-detail-panel" id="vs-detail-panel-${uid}"></div>
+      </td>
     </tr>`;
   }).join('');
 
@@ -2981,6 +3001,135 @@ function renderVsTeamCard(pit, oppTeam, oppTeamId, results) {
     <div style="padding:8px 16px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">
       Bateadores sin ABs vs este pitcher aparecen atenuados. Ordenados por AB históricos.
     </div>
+  </div>`;
+}
+
+// ── VS BATTER DETAIL ─────────────────────────────────────────────────────────
+
+const VS_EVENT_MAP = {
+  single:                       {l:'1B',  cls:'hit'},
+  double:                       {l:'2B',  cls:'hit'},
+  triple:                       {l:'3B',  cls:'hit'},
+  home_run:                     {l:'HR',  cls:'hr'},
+  strikeout:                    {l:'K',   cls:'so'},
+  walk:                         {l:'BB',  cls:'bb'},
+  intent_walk:                  {l:'IBB', cls:'bb'},
+  hit_by_pitch:                 {l:'HBP', cls:'bb'},
+  field_out:                    {l:'F',   cls:'out'},
+  flyout:                       {l:'F',   cls:'out'},
+  lineout:                      {l:'L',   cls:'out'},
+  pop_out:                      {l:'P',   cls:'out'},
+  groundout:                    {l:'G',   cls:'out'},
+  force_out:                    {l:'FC',  cls:'out'},
+  grounded_into_double_play:    {l:'GDP', cls:'out'},
+  double_play:                  {l:'DP',  cls:'out'},
+  triple_play:                  {l:'TP',  cls:'out'},
+  sac_fly:                      {l:'SF',  cls:'out'},
+  sac_bunt:                     {l:'SAC', cls:'out'},
+  field_error:                  {l:'E',   cls:''},
+  catcher_interf:               {l:'CI',  cls:'bb'},
+};
+
+async function vsToggleBatterDetail(uid, batterId, batterName, pitId) {
+  const row   = document.getElementById('vs-detail-' + uid);
+  const panel = document.getElementById('vs-detail-panel-' + uid);
+  const arrow = document.getElementById('vs-arr-' + uid);
+  if (!row || !panel) return;
+
+  if (vsOpenBatters[uid]) {
+    row.style.display = 'none';
+    vsOpenBatters[uid] = false;
+    if (arrow) arrow.textContent = '▾';
+    return;
+  }
+  row.style.display = '';
+  vsOpenBatters[uid] = true;
+  if (arrow) arrow.textContent = '▴';
+
+  if (panel.dataset.loaded === 'done') return;
+  if (panel.dataset.loaded === 'loading') return;
+
+  panel.dataset.loaded = 'loading';
+  panel.innerHTML = `<div class="loading-msg" style="padding:.5rem 1rem;font-size:12px"><div class="spinner" style="width:12px;height:12px;border-width:2px"></div>Cargando historial de ABs...</div>`;
+
+  try {
+    if (!vsGLCache[pitId]) {
+      const r = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitId}/stats?stats=gameLog&season=2026&group=pitching&gameType=R&sportId=1`);
+      const d = await r.json();
+      vsGLCache[pitId] = (d.stats?.[0]?.splits || [])
+        .map(s => ({ gamePk: s.game?.gamePk, date: (s.game?.gameDate || '').slice(0, 10) }))
+        .filter(g => g.gamePk);
+    }
+    const games = vsGLCache[pitId];
+
+    const uncached = games.filter(g => !(g.gamePk in vsPBPCache));
+    await Promise.all(uncached.map(async g => {
+      try {
+        const r = await fetch(`https://statsapi.mlb.com/api/v1/game/${g.gamePk}/playByPlay`);
+        const d = await r.json();
+        vsPBPCache[g.gamePk] = d.allPlays || [];
+      } catch { vsPBPCache[g.gamePk] = []; }
+    }));
+
+    const pas = [];
+    games.forEach(g => {
+      (vsPBPCache[g.gamePk] || []).forEach(play => {
+        if (play.matchup?.batter?.id  !== parseInt(batterId)) return;
+        if (play.matchup?.pitcher?.id !== parseInt(pitId))    return;
+        if (!play.about?.isComplete) return;
+        pas.push({
+          date:        g.date,
+          inning:      play.about?.inning,
+          halfInning:  play.about?.halfInning,
+          eventType:   play.result?.eventType || '',
+          event:       play.result?.event || '—',
+          rbi:         play.result?.rbi || 0,
+        });
+      });
+    });
+
+    pas.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    panel.dataset.loaded = 'done';
+    renderVsBatterDetail(panel, pas);
+  } catch(e) {
+    panel.dataset.loaded = '';
+    panel.innerHTML = `<div style="padding:.5rem 1rem;color:var(--red);font-size:12px">⚠ ${e.message}</div>`;
+  }
+}
+
+function renderVsBatterDetail(panel, pas) {
+  if (!pas.length) {
+    panel.innerHTML = `<div style="padding:.6rem 1.2rem;font-size:12px;color:var(--text3)">Sin turnos al bat registrados vs este pitcher.</div>`;
+    return;
+  }
+  const rows = pas.map(pa => {
+    const ev  = VS_EVENT_MAP[pa.eventType] || {l: pa.event, cls: ''};
+    const col = ev.cls === 'hit' ? 'var(--green)' :
+                ev.cls === 'hr'  ? 'var(--accent)' :
+                ev.cls === 'so'  ? 'var(--red)'    :
+                ev.cls === 'bb'  ? 'var(--blue)'   : 'var(--text2)';
+    const fw  = ev.cls === 'hr' ? '700' : '600';
+    const inn = pa.halfInning === 'top' ? `▲${pa.inning}` : `▼${pa.inning}`;
+    const rbiStr = pa.rbi > 0 ? `<span style="color:var(--accent);font-size:10px;margin-left:5px;font-weight:400">${pa.rbi}RBI</span>` : '';
+    return `<tr class="vs-detail-tr">
+      <td style="padding:5px 14px;font-size:12px;color:var(--text2);font-family:'Azeret Mono',monospace;white-space:nowrap">${pa.date || '—'}</td>
+      <td style="padding:5px 10px;font-size:11px;color:var(--text3);text-align:center;font-family:'Azeret Mono',monospace">${inn}</td>
+      <td style="padding:5px 14px;font-size:13px;font-weight:${fw};color:${col};text-align:center">${ev.l}${rbiStr}</td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `<div style="padding:4px 0 2px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="padding:4px 14px;font-size:10px;letter-spacing:.6px;color:var(--text3);text-align:left;font-weight:500">FECHA</th>
+        <th style="padding:4px 10px;font-size:10px;letter-spacing:.6px;color:var(--text3);text-align:center;font-weight:500">INN</th>
+        <th style="padding:4px 14px;font-size:10px;letter-spacing:.6px;color:var(--text3);text-align:center;font-weight:500">RESULTADO</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr>
+        <td colspan="3" style="padding:5px 14px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">${pas.length} turno${pas.length !== 1 ? 's' : ''} al bat</td>
+      </tr></tfoot>
+    </table>
   </div>`;
 }
 
