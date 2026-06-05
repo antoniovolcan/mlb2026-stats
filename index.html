@@ -1910,7 +1910,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 (function () {
   // Versión del día: "2026-06-03"  → cambia cada día → el browser no reutiliza
   // la caché HTTP del día anterior para las APIs de MLB
-  const DAY_VER = new Date().toISOString().slice(0, 10);
+  const _n = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const DAY_VER = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}-${String(_n.getDate()).padStart(2,'0')}`;
   const MLB_HOSTS = ['statsapi.mlb.com', 'bdfed.stitch.mlbinfra.com', 'img.mlbstatic.com'];
 
   // Interceptar window.fetch y añadir ?_v=YYYY-MM-DD a todas las llamadas MLB
@@ -2958,9 +2959,13 @@ let juegosRefreshInterval = null;
 let juegosFavs = new Set(JSON.parse(localStorage.getItem('mlb_fav_games') || '[]'));
 
 function juegosDateStr(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
+  // Usar huso horario de Nashville (America/Chicago = CDT/CST)
+  const nashville = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  nashville.setDate(nashville.getDate() + offset);
+  const y = nashville.getFullYear();
+  const m = String(nashville.getMonth() + 1).padStart(2, '0');
+  const d = String(nashville.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function juegosSetDay(offset) {
