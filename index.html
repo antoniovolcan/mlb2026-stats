@@ -4029,13 +4029,21 @@ let btOpenBats    = {};
 let btAnswered    = false;
 
 async function btEnsurePool() {
-  if (btPoolLoaded) return;
-  const res = await fetch('https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2025&sportId=1&stats=season&group=pitching&gameType=R&limit=500&sortStat=inningsPitched&order=desc');
+  if (btPoolLoaded && btPool.length) return;
+  // Usar statsapi.mlb.com — más confiable para temporadas pasadas
+  const res = await fetch('https://statsapi.mlb.com/api/v1/stats/leaders?leaderCategories=strikeouts&season=2025&sportId=1&leaderGameTypes=R&limit=100');
   const d = await res.json();
-  btPool = (d.stats || [])
-    .filter(s => s.playerId && parseFloat(s.inningsPitched || 0) > 30)
-    .map(s => ({ id: s.playerId, name: `${s.playerFirstName||''} ${s.playerLastName||''}`.trim(), teamId: s.teamId, team: s.teamAbbrev || s.teamName || '' }));
+  const leaders = d.leagueLeaders?.[0]?.leaders || [];
+  btPool = leaders
+    .filter(l => l.person?.id)
+    .map(l => ({ id: l.person.id, name: l.person.fullName || '', teamId: l.team?.id || 0, team: l.team?.abbreviation || l.team?.name || '' }));
   btPoolLoaded = true;
+}
+
+function btReset() {
+  btShownKeys = new Set();
+  localStorage.removeItem('bt_shown_keys');
+  btPickNewGame();
 }
 
 async function btPickNewGame() {
@@ -4045,37 +4053,46 @@ async function btPickNewGame() {
     await btEnsurePool();
     if (!btPool.length) throw new Error('No se pudo cargar el pool de pitchers 2025');
 
-    // Intentar hasta 15 pitchers al azar de forma secuencial
-    const shuffled = [...btPool].sort(() => Math.random() - .5).slice(0, 15);
+    // Tomar hasta 20 pitchers al azar
+    const shuffled = [...btPool].sort(() => Math.random() - .5).slice(0, 20);
     let found = null;
 
     for (const pitcher of shuffled) {
       try {
         const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitcher.id}/stats?stats=gameLog&season=2025&group=pitching&gameType=R&sportId=1`);
         const d   = await res.json();
-        // Proxy de apertura: IP >= 4 en ese juego
-        const starts = (d.stats?.[0]?.splits || [])
-          .filter(s => parseFloat(s.stat?.inningsPitched || 0) >= 4);
+        const allSplits = d.stats?.[0]?.splits || [];
+        // Considerar cualquier aparición con gamePk y fecha válidos
+        const validGames = allSplits.filter(s => s.game?.gamePk && s.game?.gameDate);
 
-        const unused = starts.filter(s => {
-          const date = (s.game?.gameDate || '').slice(0, 10);
-          return date && !btShownKeys.has(`${pitcher.id}_${date}`);
+        const unused = validGames.filter(s => {
+          const date = (s.game.gameDate || '').slice(0, 10);
+          return !btShownKeys.has(`${pitcher.id}_${date}`);
         });
 
         if (unused.length) {
           const pick = unused[Math.floor(Math.random() * unused.length)];
-          found = { pitcher, split: pick, allStarts: starts };
+          // Calcular previas: todos los juegos antes de este, los últimos 15
+          const prevGames = validGames
+            .filter(s => (s.game.gameDate || '').slice(0, 10) < (pick.game.gameDate || '').slice(0, 10))
+            .slice(-15);
+          found = { pitcher, split: pick, prevGames };
           break;
         }
-      } catch(e) { /* skip este pitcher */ }
+      } catch(e) { /* skip */ }
     }
 
     if (!found) {
-      area.innerHTML = `<div class="bt-start-screen"><div class="bt-start-icon">🏆</div><div class="bt-start-title">¡Todo Completado!</div><p class="bt-start-desc">Ya revisaste todas las aperturas disponibles de la temporada 2025.</p></div>`;
+      area.innerHTML = `<div class="bt-start-screen">
+        <div class="bt-start-icon">🏆</div>
+        <div class="bt-start-title">¡Todo Completado!</div>
+        <p class="bt-start-desc">Ya revisaste todas las aperturas disponibles, o no se encontraron juegos nuevos. Puedes reiniciar el historial de exámenes vistos.</p>
+        <button class="bt-start-btn" onclick="btReset()">↺ Reiniciar y comenzar</button>
+      </div>`;
       return;
     }
 
-    const { pitcher, split, allStarts } = found;
+    const { pitcher, split, prevGames } = found;
     const date      = (split.game?.gameDate || '').slice(0, 10);
     const gamePk    = split.game?.gamePk;
     const oppTeamId = split.opponent?.id;
@@ -4087,15 +4104,10 @@ async function btPickNewGame() {
     btShownKeys.add(key);
     localStorage.setItem('bt_shown_keys', JSON.stringify([...btShownKeys]));
 
-    btCurrent   = { pitcherId: pitcher.id, pitcherName: pitcher.name, teamName: pitcher.team, date, gamePk, oppTeamId, oppName, actualKs };
-    btAnswered  = false;
+    btCurrent     = { pitcherId: pitcher.id, pitcherName: pitcher.name, teamName: pitcher.team, date, gamePk, oppTeamId, oppName, actualKs };
+    btAnswered    = false;
     btBatterCache = {};
-    btOpenBats  = {};
-
-    // Últimas aperturas ANTES de esta fecha (máx 15) — usar allStarts ya cargado
-    const prevStarts = allStarts
-      .filter(s => (s.game?.gameDate || '').slice(0, 10) < date)
-      .slice(-15);   // ya vienen ordenados por fecha asc desde la API
+    btOpenBats    = {};
 
     // Roster rival en esa fecha
     let roster = [];
@@ -4105,7 +4117,7 @@ async function btPickNewGame() {
       roster = (rd.roster || []).filter(p => p.position?.type !== 'Pitcher' && p.position?.abbreviation !== 'P');
     } catch(e) { /* roster vacío si falla */ }
 
-    btRender(prevStarts, roster);
+    btRender(prevGames, roster);
   } catch(e) {
     area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
   }
