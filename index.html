@@ -884,6 +884,64 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
   border-color: rgba(200,168,75,.5);
 }
 
+/* ── BACKTESTING ── */
+.bt-start-screen { text-align:center; padding:3rem 2rem; }
+.bt-start-icon   { font-size:52px; margin-bottom:1rem; }
+.bt-start-title  { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; color:var(--text); margin-bottom:.5rem; }
+.bt-start-desc   { font-size:13px; color:var(--text2); max-width:440px; margin:0 auto 1.5rem; line-height:1.6; }
+.bt-start-btn    { padding:10px 30px; background:var(--accent); color:#000; border:none; border-radius:var(--radius); font-family:'Sora',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:background .15s; }
+.bt-start-btn:hover { background:var(--accent2); }
+.bt-new-btn      { padding:6px 14px; background:rgba(200,168,75,.12); border:1px solid rgba(200,168,75,.3); border-radius:var(--radius); color:var(--accent); font-family:'Sora',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; margin-left:auto; }
+.bt-new-btn:hover { background:rgba(200,168,75,.22); }
+.bt-context-box  { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius2); padding:16px 20px; margin-bottom:1.25rem; }
+.bt-context-date { font-family:'Azeret Mono',monospace; font-size:11px; color:var(--accent); font-weight:600; letter-spacing:.8px; margin-bottom:4px; }
+.bt-context-matchup { font-size:16px; font-weight:600; color:var(--text); margin-bottom:3px; }
+.bt-context-sub  { font-size:12px; color:var(--text3); }
+.bt-block        { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius2); margin-bottom:1.25rem; overflow:hidden; }
+.bt-block-header { padding:10px 16px; background:var(--bg3); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.bt-block-title  { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1px; color:var(--text2); }
+/* Batter accordion */
+.bt-batter-row   { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; user-select:none; }
+.bt-batter-row:last-of-type { border-bottom:none; }
+.bt-batter-row:hover { background:var(--bg3); }
+.bt-batter-pos   { font-size:10px; font-weight:600; color:var(--text3); background:var(--bg4); padding:2px 5px; border-radius:3px; letter-spacing:.5px; min-width:26px; text-align:center; }
+.bt-batter-name  { font-size:13px; font-weight:500; color:var(--text); flex:1; }
+.bt-batter-arr   { font-size:10px; color:var(--text3); }
+.bt-batter-gl    { display:none; background:var(--bg3); border-bottom:1px solid var(--border); overflow-x:auto; }
+.bt-batter-gl.open { display:block; }
+/* Predicción */
+.bt-predict-box  { background:var(--bg2); border:1px solid var(--border2); border-radius:var(--radius2); padding:22px 20px; margin-bottom:1.25rem; text-align:center; }
+.bt-predict-q    { font-size:14px; font-weight:500; color:var(--text); margin-bottom:14px; line-height:1.5; }
+.bt-predict-row  { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+.bt-predict-input { width:80px; padding:8px 10px; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); color:var(--text); font-family:'Azeret Mono',monospace; font-size:24px; font-weight:700; text-align:center; outline:none; -moz-appearance:textfield; }
+.bt-predict-input:focus { border-color:var(--accent); }
+.bt-predict-input::-webkit-outer-spin-button,
+.bt-predict-input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.bt-predict-submit { padding:10px 26px; background:var(--accent); color:#000; border:none; border-radius:var(--radius); font-family:'Sora',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:background .15s; }
+.bt-predict-submit:hover { background:var(--accent2); }
+/* Reveal */
+.bt-reveal-box   { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius2); padding:28px 20px; margin-bottom:1.25rem; text-align:center; }
+.bt-reveal-result { font-family:'Bebas Neue',sans-serif; font-size:38px; letter-spacing:2px; margin-bottom:8px; }
+.bt-reveal-detail { font-size:13px; color:var(--text2); margin-bottom:18px; }
+.bt-reveal-next  { padding:9px 26px; background:rgba(200,168,75,.12); border:1px solid rgba(200,168,75,.3); border-radius:var(--radius); color:var(--accent); font-family:'Sora',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.bt-reveal-next:hover { background:rgba(200,168,75,.22); }
+.bt-acc-exact { color:var(--green); }
+.bt-acc-close { color:var(--accent); }
+.bt-acc-miss  { color:var(--red); }
+/* Historial */
+.hist-empty   { text-align:center; padding:3rem; color:var(--text3); font-size:14px; line-height:1.8; }
+.hist-table   { width:100%; border-collapse:collapse; }
+.hist-th      { padding:8px 12px; font-size:10px; font-weight:600; letter-spacing:.8px; color:var(--text3); text-align:left; border-bottom:1px solid var(--border); background:var(--bg3); white-space:nowrap; }
+.hist-td      { padding:9px 12px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.hist-tr:last-child .hist-td { border-bottom:none; }
+.hist-tr:hover .hist-td { background:var(--bg3); }
+.hist-diff-good { color:var(--green); font-weight:700; }
+.hist-diff-ok   { color:var(--accent); font-weight:700; }
+.hist-diff-bad  { color:var(--red); font-weight:700; }
+.hist-stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius2); padding:16px; text-align:center; flex:1; min-width:120px; }
+.hist-stat-num  { font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1; margin-bottom:4px; }
+.hist-stat-lbl  { font-size:10px; letter-spacing:.6px; color:var(--text3); font-weight:600; }
+
 /* VS batter detail */
 .vs-bat-row { cursor: pointer; }
 .vs-bat-row:hover { background: var(--bg3); }
@@ -1778,6 +1836,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     <div class="nav-tab" onclick="showSection('bateadores')">Bateadores</div>
     <div class="nav-tab" onclick="showSection('versus')">Pitcher vs Equipo</div>
     <div class="nav-tab" onclick="showSection('pvs')">Pitcher vs Pitcher</div>
+    <div class="nav-tab" onclick="showSection('bt')">Backtesting</div>
+    <div class="nav-tab" onclick="showSection('hist')">Historial</div>
   </nav>
 </header>
 
@@ -1903,6 +1963,32 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
     </div>
   </div>
 
+  <!-- BACKTESTING -->
+  <div class="section-panel" id="sec-bt">
+    <div class="section-header">
+      <div class="section-title">Backtesting Pitchers</div>
+      <span class="live-badge">2025</span>
+      <button class="bt-new-btn" onclick="btPickNewGame()">⟳ Nuevo Examen</button>
+    </div>
+    <div id="bt-area">
+      <div class="bt-start-screen">
+        <div class="bt-start-icon">⚾</div>
+        <div class="bt-start-title">Backtesting de Pitchers</div>
+        <p class="bt-start-desc">Analiza el historial del pitcher y del lineup rival para predecir cuántos strikeouts tendrá en un partido real de la temporada 2025.</p>
+        <button class="bt-start-btn" onclick="btPickNewGame()">Comenzar Examen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="section-panel" id="sec-hist">
+    <div class="section-header">
+      <div class="section-title">Historial</div>
+      <span class="live-badge" id="hist-count-badge">0 exámenes</span>
+    </div>
+    <div id="hist-area"></div>
+  </div>
+
 </div>
 
 <script>
@@ -1994,6 +2080,7 @@ function showSection(name, pushState = true) {
   if (name === 'equipos') loadStandings();
   if (name === 'juegos') loadJuegos();
   if (name === 'bateadores' && !batRosterCache['all']) selectAllBatters();
+  if (name === 'hist') renderHistorial();
 }
 
 // Botón atrás del navegador
@@ -3930,6 +4017,336 @@ document.addEventListener('mousedown', e => {
   const valid = ['equipos', 'bateadores', 'versus', 'pvs'];
   if (valid.includes(hash)) showSection(hash);
 })();
+
+// ── BACKTESTING ───────────────────────────────────────────────────────────────
+let btPool        = [];
+let btPoolLoaded  = false;
+let btShownKeys   = new Set(JSON.parse(localStorage.getItem('bt_shown_keys') || '[]'));
+let btHistory     = JSON.parse(localStorage.getItem('bt_history') || '[]');
+let btCurrent     = null;
+let btBatterCache = {};
+let btOpenBats    = {};
+let btAnswered    = false;
+
+async function btEnsurePool() {
+  if (btPoolLoaded) return;
+  const res = await fetch('https://bdfed.stitch.mlbinfra.com/bdfed/stats/player?env=prod&season=2025&sportId=1&stats=season&group=pitching&gameType=R&limit=500&sortStat=inningsPitched&order=desc');
+  const d = await res.json();
+  btPool = (d.stats || [])
+    .filter(s => s.playerId && parseFloat(s.inningsPitched || 0) > 30)
+    .map(s => ({ id: s.playerId, name: `${s.playerFirstName||''} ${s.playerLastName||''}`.trim(), teamId: s.teamId, team: s.teamAbbrev || s.teamName || '' }));
+  btPoolLoaded = true;
+}
+
+async function btPickNewGame() {
+  const area = document.getElementById('bt-area');
+  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div>Buscando examen aleatorio...</div>`;
+  try {
+    await btEnsurePool();
+    if (!btPool.length) throw new Error('No se pudo cargar el pool de pitchers 2025');
+
+    const shuffled = [...btPool].sort(() => Math.random() - .5);
+    let found = null;
+
+    for (const pitcher of shuffled) {
+      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitcher.id}/stats?stats=gameLog&season=2025&group=pitching&gameType=R&sportId=1`);
+      const d   = await res.json();
+      const starts = (d.stats?.[0]?.splits || [])
+        .filter(s => parseInt(s.stat?.gamesStarted || 0) > 0);
+
+      const unused = starts.filter(s => {
+        const date = (s.game?.gameDate || '').slice(0, 10);
+        return date && !btShownKeys.has(`${pitcher.id}_${date}`);
+      });
+
+      if (unused.length) {
+        const pick = unused[Math.floor(Math.random() * unused.length)];
+        found = { pitcher, split: pick, allStarts: starts };
+        break;
+      }
+    }
+
+    if (!found) {
+      area.innerHTML = `<div class="bt-start-screen"><div class="bt-start-icon">🏆</div><div class="bt-start-title">¡Todo Completado!</div><p class="bt-start-desc">Ya revisaste todas las aperturas disponibles de la temporada 2025.</p></div>`;
+      return;
+    }
+
+    const { pitcher, split, allStarts } = found;
+    const date      = (split.game?.gameDate || '').slice(0, 10);
+    const gamePk    = split.game?.gamePk;
+    const oppTeamId = split.opponent?.id;
+    const oppName   = split.opponent?.name || split.opponent?.abbreviation || '—';
+    const actualKs  = parseInt(split.stat?.strikeOuts ?? 0);
+
+    // Marcar como mostrado
+    const key = `${pitcher.id}_${date}`;
+    btShownKeys.add(key);
+    localStorage.setItem('bt_shown_keys', JSON.stringify([...btShownKeys]));
+
+    btCurrent   = { pitcherId: pitcher.id, pitcherName: pitcher.name, teamName: pitcher.team, date, gamePk, oppTeamId, oppName, actualKs };
+    btAnswered  = false;
+    btBatterCache = {};
+    btOpenBats  = {};
+
+    // Últimas aperturas ANTES de esta fecha (máx 15)
+    const prevStarts = allStarts
+      .filter(s => (s.game?.gameDate || '').slice(0, 10) < date)
+      .slice(-15);
+
+    // Roster rival en esa fecha
+    let roster = [];
+    try {
+      const rr = await fetch(`https://statsapi.mlb.com/api/v1/teams/${oppTeamId}/roster?date=${date}&rosterType=Active`);
+      const rd = await rr.json();
+      roster = (rd.roster || []).filter(p => p.position?.type !== 'Pitcher' && p.position?.abbreviation !== 'P');
+    } catch(e) { /* roster vacío si falla */ }
+
+    btRender(prevStarts, roster);
+  } catch(e) {
+    area.innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function btPitcherRow(s) {
+  const date = (s.game?.gameDate || '').slice(5, 10).replace('-', '/');
+  const opp  = (TEAM_ABBR && TEAM_ABBR[s.opponent?.id]) || s.opponent?.abbreviation || '?';
+  const loc  = s.isHome ? 'vs' : '@';
+  const dec  = s.isWin  ? `<span style="color:var(--green);font-weight:700">W</span>`
+             : s.isLoss ? `<span style="color:var(--red);font-weight:700">L</span>` : '—';
+  const ip   = s.stat?.inningsPitched || '—';
+  const k    = s.stat?.strikeOuts     ?? '—';
+  const h    = s.stat?.hits           ?? '—';
+  const r    = s.stat?.runs           ?? '—';
+  const era  = s.stat?.era  ? parseFloat(s.stat.era).toFixed(2) : '—';
+  const bb   = s.stat?.baseOnBalls    ?? '—';
+  return `<tr class="st-tr">
+    <td class="st-td" style="font-family:'Azeret Mono',monospace;font-size:11px;white-space:nowrap">${date}</td>
+    <td class="st-td" style="text-align:left;font-size:12px;white-space:nowrap">${loc} ${opp} ${dec}</td>
+    <td class="st-td">${ip}</td>
+    <td class="st-td wl-bold">${k}</td>
+    <td class="st-td">${h}</td><td class="st-td">${r}</td>
+    <td class="st-td">${era}</td><td class="st-td">${bb}</td>
+  </tr>`;
+}
+
+function btBatterRow(s) {
+  const date = (s.game?.gameDate || '').slice(5, 10).replace('-', '/');
+  const opp  = (TEAM_ABBR && TEAM_ABBR[s.opponent?.id]) || s.opponent?.abbreviation || '?';
+  const loc  = s.isHome ? 'vs' : '@';
+  const ab   = s.stat?.atBats        ?? '—';
+  const h    = s.stat?.hits          ?? '—';
+  const hr   = s.stat?.homeRuns      ?? '—';
+  const bb   = s.stat?.baseOnBalls   ?? '—';
+  const so   = s.stat?.strikeOuts    ?? '—';
+  const avg  = (s.stat?.atBats > 0) ? (s.stat.hits / s.stat.atBats).toFixed(3) : '—';
+  return `<tr class="st-tr">
+    <td class="st-td" style="font-family:'Azeret Mono',monospace;font-size:11px;white-space:nowrap">${date}</td>
+    <td class="st-td" style="text-align:left;font-size:12px;white-space:nowrap">${loc} ${opp}</td>
+    <td class="st-td">${ab}</td><td class="st-td">${h}</td><td class="st-td">${hr}</td>
+    <td class="st-td">${bb}</td><td class="st-td">${so}</td>
+    <td class="st-td" style="font-weight:600">${avg}</td>
+  </tr>`;
+}
+
+function btRender(prevStarts, roster) {
+  const c = btCurrent;
+  const dateFmt = new Date(c.date + 'T12:00:00').toLocaleDateString('es', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+  const pitcherPhoto = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${c.pitcherId}/headshot/67/current`;
+
+  const pitRows = prevStarts.length
+    ? [...prevStarts].reverse().map(btPitcherRow).join('')
+    : `<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--text3);font-size:13px">Sin aperturas previas registradas en 2025</td></tr>`;
+
+  const rosterHTML = roster.map(p => {
+    const pid = p.person.id;
+    const pos = p.position?.abbreviation || '—';
+    const safe = (p.person.fullName || '').replace(/'/g, "\\'");
+    return `<div class="bt-batter-row" onclick="btToggleBatterGL(${pid},'${safe}','${c.date}')">
+      <span class="bt-batter-pos">${pos}</span>
+      <span class="bt-batter-name">${p.person.fullName}</span>
+      <span class="bt-batter-arr" id="bt-barr-${pid}">▾</span>
+    </div>
+    <div class="bt-batter-gl" id="bt-bgl-${pid}"></div>`;
+  }).join('') || `<div style="padding:14px 16px;color:var(--text3);font-size:13px">No se pudo cargar el roster.</div>`;
+
+  document.getElementById('bt-area').innerHTML = `
+    <div class="bt-context-box" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <img src="${pitcherPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);flex-shrink:0" onerror="this.style.display='none'">
+      <div>
+        <div class="bt-context-date">${dateFmt}</div>
+        <div class="bt-context-matchup">${c.pitcherName} <span style="color:var(--text3);font-size:13px;font-weight:400">(${c.teamName})</span> vs ${c.oppName}</div>
+        <div class="bt-context-sub">Apertura — Temporada Regular 2025 · Partido real</div>
+      </div>
+    </div>
+
+    <div class="bt-block">
+      <div class="bt-block-header">
+        <span class="bt-block-title">Últimas ${prevStarts.length} aperturas — ${c.pitcherName}</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:auto">Juegos anteriores al ${c.date}</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="st-table" style="min-width:520px">
+          <thead><tr>
+            <th class="st-th">FECHA</th><th class="st-th" style="text-align:left">OPP</th>
+            <th class="st-th">IP</th><th class="st-th">K</th><th class="st-th">H</th>
+            <th class="st-th">R</th><th class="st-th">ERA</th><th class="st-th">BB</th>
+          </tr></thead>
+          <tbody>${pitRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bt-block">
+      <div class="bt-block-header">
+        <span class="bt-block-title">Roster ${c.oppName}</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:auto">Click en bateador → últimos 15 juegos anteriores</span>
+      </div>
+      <div id="bt-roster-list">${rosterHTML}</div>
+    </div>
+
+    <div class="bt-predict-box" id="bt-predict-box">
+      <div class="bt-predict-q">¿Cuántos <span style="color:var(--accent);font-weight:700">strikeouts</span> tendrá <strong>${c.pitcherName}</strong> en este partido?</div>
+      <div class="bt-predict-row">
+        <input class="bt-predict-input" id="bt-k-input" type="number" min="0" max="25" placeholder="—" onkeydown="if(event.key==='Enter')btSubmit()">
+        <button class="bt-predict-submit" onclick="btSubmit()">Enviar predicción</button>
+      </div>
+    </div>
+  `;
+}
+
+async function btToggleBatterGL(pid, name, beforeDate) {
+  const panel = document.getElementById('bt-bgl-' + pid);
+  const arrow = document.getElementById('bt-barr-' + pid);
+  if (!panel) return;
+
+  if (btOpenBats[pid]) {
+    panel.classList.remove('open');
+    btOpenBats[pid] = false;
+    if (arrow) arrow.textContent = '▾';
+    return;
+  }
+  panel.classList.add('open');
+  btOpenBats[pid] = true;
+  if (arrow) arrow.textContent = '▴';
+
+  if (btBatterCache[pid]) { btRenderBatterGL(pid, btBatterCache[pid]); return; }
+
+  panel.innerHTML = `<div style="padding:8px 14px;font-size:11px;color:var(--text3)"><div class="spinner" style="width:10px;height:10px;border-width:1.5px;display:inline-block;vertical-align:middle;margin-right:6px"></div>Cargando juegos de ${name}...</div>`;
+
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=gameLog&season=2025&group=hitting&gameType=R&sportId=1`);
+    const d   = await res.json();
+    const splits = (d.stats?.[0]?.splits || [])
+      .filter(s => (s.game?.gameDate || '').slice(0, 10) < beforeDate)
+      .slice(-15);
+    btBatterCache[pid] = splits;
+    btRenderBatterGL(pid, splits);
+  } catch(e) {
+    panel.innerHTML = `<div style="padding:8px 14px;color:var(--red);font-size:11px">⚠ Error al cargar</div>`;
+  }
+}
+
+function btRenderBatterGL(pid, splits) {
+  const panel = document.getElementById('bt-bgl-' + pid);
+  if (!panel) return;
+  if (!splits.length) {
+    panel.innerHTML = `<div style="padding:9px 14px;font-size:12px;color:var(--text3)">Sin juegos registrados antes de esta fecha.</div>`;
+    return;
+  }
+  const rows = [...splits].reverse().map(btBatterRow).join('');
+  panel.innerHTML = `<div style="overflow-x:auto"><table class="st-table" style="min-width:460px">
+    <thead><tr>
+      <th class="st-th">FECHA</th><th class="st-th" style="text-align:left">OPP</th>
+      <th class="st-th">AB</th><th class="st-th">H</th><th class="st-th">HR</th>
+      <th class="st-th">BB</th><th class="st-th">SO</th><th class="st-th">AVG</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function btSubmit() {
+  const inp = document.getElementById('bt-k-input');
+  const val = parseInt(inp?.value);
+  if (isNaN(val) || val < 0) { inp?.focus(); return; }
+
+  const c    = btCurrent;
+  const diff = Math.abs(val - c.actualKs);
+  const accCls = diff === 0 ? 'bt-acc-exact' : diff <= 2 ? 'bt-acc-close' : 'bt-acc-miss';
+  const accMsg = diff === 0 ? '¡EXACTO! 🎯' : diff <= 2 ? `Cerca — ±${diff} K 👍` : `Fallaste por ${diff} K 😅`;
+
+  const entry = {
+    key: `${c.pitcherId}_${c.date}`,
+    pitcherName: c.pitcherName, pitcherId: c.pitcherId, teamName: c.teamName,
+    date: c.date, oppName: c.oppName, gamePk: c.gamePk,
+    prediction: val, actualKs: c.actualKs, diff, ts: Date.now()
+  };
+  btHistory.unshift(entry);
+  localStorage.setItem('bt_history', JSON.stringify(btHistory));
+
+  const box = document.getElementById('bt-predict-box');
+  if (box) box.outerHTML = `<div class="bt-reveal-box">
+    <div class="bt-reveal-result ${accCls}">${accMsg}</div>
+    <div class="bt-reveal-detail">Tu predicción: <strong>${val} K</strong> &nbsp;·&nbsp; Real: <strong style="color:var(--accent)">${c.actualKs} K</strong></div>
+    <button class="bt-reveal-next" onclick="btPickNewGame()">⟳ Siguiente examen</button>
+  </div>`;
+  btAnswered = true;
+}
+
+function renderHistorial() {
+  const badge = document.getElementById('hist-count-badge');
+  if (badge) badge.textContent = `${btHistory.length} examen${btHistory.length !== 1 ? 'es' : ''}`;
+  const area = document.getElementById('hist-area');
+  if (!area) return;
+
+  if (!btHistory.length) {
+    area.innerHTML = `<div class="hist-empty">⚾ Aún no has completado ningún examen.<br>Ve a <strong>Backtesting Pitchers</strong> para comenzar.</div>`;
+    return;
+  }
+
+  const total   = btHistory.length;
+  const exact   = btHistory.filter(e => e.diff === 0).length;
+  const close   = btHistory.filter(e => e.diff <= 2).length;
+  const avgDiff = (btHistory.reduce((s, e) => s + e.diff, 0) / total).toFixed(1);
+
+  const rows = btHistory.map((e, i) => {
+    const diffCls = e.diff === 0 ? 'hist-diff-good' : e.diff <= 2 ? 'hist-diff-ok' : 'hist-diff-bad';
+    const diffStr = e.diff === 0 ? '✓ 0' : `±${e.diff}`;
+    const dateFmt = new Date(e.date + 'T12:00:00').toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
+    const photo   = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_60,q_auto:best/v1/people/${e.pitcherId}/headshot/67/current`;
+    return `<tr class="hist-tr">
+      <td class="hist-td" style="color:var(--text3);font-size:11px">${total - i}</td>
+      <td class="hist-td">
+        <div style="display:flex;align-items:center;gap:8px">
+          <img src="${photo}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:center 10%;border:1px solid var(--border2)" onerror="this.style.display='none'">
+          <div><div style="font-weight:600">${e.pitcherName}</div><div style="font-size:11px;color:var(--text3)">${e.teamName||''}</div></div>
+        </div>
+      </td>
+      <td class="hist-td" style="font-family:'Azeret Mono',monospace;font-size:12px;white-space:nowrap">${dateFmt}</td>
+      <td class="hist-td" style="font-size:12px">vs ${e.oppName}</td>
+      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;font-size:15px">${e.prediction}</td>
+      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;color:var(--accent);font-weight:700;font-size:15px">${e.actualKs}</td>
+      <td class="hist-td" style="text-align:center"><span class="${diffCls}">${diffStr}</span></td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem">
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${total}</div><div class="hist-stat-lbl">EXÁMENES</div></div>
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--green)">${exact}</div><div class="hist-stat-lbl">EXACTOS</div></div>
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--accent2)">${close}</div><div class="hist-stat-lbl">DENTRO DE ±2K</div></div>
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${avgDiff}</div><div class="hist-stat-lbl">ERROR PROMEDIO</div></div>
+    </div>
+    <div class="bt-block" style="overflow-x:auto">
+      <table class="hist-table">
+        <thead><tr>
+          <th class="hist-th">#</th><th class="hist-th">PITCHER</th><th class="hist-th">FECHA</th>
+          <th class="hist-th">VS</th><th class="hist-th" style="text-align:center">TUS Ks</th>
+          <th class="hist-th" style="text-align:center">Ks REALES</th><th class="hist-th" style="text-align:center">DIFF</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
 
 </script>
 <div id="global-tip" style="display:none;position:absolute;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.5);min-width:200px;pointer-events:none;"></div>
