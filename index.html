@@ -4339,10 +4339,9 @@ function renderHistorial() {
     return;
   }
 
-  const total   = btHistory.length;
-  const exact   = btHistory.filter(e => e.diff === 0).length;
-  const close   = btHistory.filter(e => e.diff <= 2).length;
-  const avgDiff = (btHistory.reduce((s, e) => s + e.diff, 0) / total).toFixed(1);
+  const total     = btHistory.length;
+  const correct   = btHistory.filter(e => e.diff === 0).length;
+  const incorrect = btHistory.filter(e => e.diff !== 0).length;
 
   const rows = btHistory.map((e, i) => {
     const dateFmt = new Date(e.date + 'T12:00:00').toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -4365,9 +4364,8 @@ function renderHistorial() {
   area.innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-start">
       <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${total}</div><div class="hist-stat-lbl">EXÁMENES</div></div>
-      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--green)">${exact}</div><div class="hist-stat-lbl">EXACTOS</div></div>
-      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--accent2)">${close}</div><div class="hist-stat-lbl">DENTRO DE ±2K</div></div>
-      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${avgDiff}</div><div class="hist-stat-lbl">ERROR PROMEDIO</div></div>
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--green)">${correct}</div><div class="hist-stat-lbl">CORRECTOS</div></div>
+      <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--red)">${incorrect}</div><div class="hist-stat-lbl">INCORRECTOS</div></div>
       <button onclick="btClearHistory()" style="margin-left:auto;padding:8px 18px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.3);border-radius:var(--radius);color:var(--red);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;align-self:center">🗑 Limpiar</button>
     </div>
     <div class="bt-block" style="overflow-x:auto">
