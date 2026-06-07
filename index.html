@@ -4045,25 +4045,29 @@ async function btPickNewGame() {
     await btEnsurePool();
     if (!btPool.length) throw new Error('No se pudo cargar el pool de pitchers 2025');
 
-    const shuffled = [...btPool].sort(() => Math.random() - .5);
+    // Intentar hasta 15 pitchers al azar de forma secuencial
+    const shuffled = [...btPool].sort(() => Math.random() - .5).slice(0, 15);
     let found = null;
 
     for (const pitcher of shuffled) {
-      const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitcher.id}/stats?stats=gameLog&season=2025&group=pitching&gameType=R&sportId=1`);
-      const d   = await res.json();
-      const starts = (d.stats?.[0]?.splits || [])
-        .filter(s => parseInt(s.stat?.gamesStarted || 0) > 0);
+      try {
+        const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitcher.id}/stats?stats=gameLog&season=2025&group=pitching&gameType=R&sportId=1`);
+        const d   = await res.json();
+        // Proxy de apertura: IP >= 4 en ese juego
+        const starts = (d.stats?.[0]?.splits || [])
+          .filter(s => parseFloat(s.stat?.inningsPitched || 0) >= 4);
 
-      const unused = starts.filter(s => {
-        const date = (s.game?.gameDate || '').slice(0, 10);
-        return date && !btShownKeys.has(`${pitcher.id}_${date}`);
-      });
+        const unused = starts.filter(s => {
+          const date = (s.game?.gameDate || '').slice(0, 10);
+          return date && !btShownKeys.has(`${pitcher.id}_${date}`);
+        });
 
-      if (unused.length) {
-        const pick = unused[Math.floor(Math.random() * unused.length)];
-        found = { pitcher, split: pick, allStarts: starts };
-        break;
-      }
+        if (unused.length) {
+          const pick = unused[Math.floor(Math.random() * unused.length)];
+          found = { pitcher, split: pick, allStarts: starts };
+          break;
+        }
+      } catch(e) { /* skip este pitcher */ }
     }
 
     if (!found) {
@@ -4088,10 +4092,10 @@ async function btPickNewGame() {
     btBatterCache = {};
     btOpenBats  = {};
 
-    // Últimas aperturas ANTES de esta fecha (máx 15)
+    // Últimas aperturas ANTES de esta fecha (máx 15) — usar allStarts ya cargado
     const prevStarts = allStarts
       .filter(s => (s.game?.gameDate || '').slice(0, 10) < date)
-      .slice(-15);
+      .slice(-15);   // ya vienen ordenados por fecha asc desde la API
 
     // Roster rival en esa fecha
     let roster = [];
