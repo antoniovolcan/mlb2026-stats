@@ -928,6 +928,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-seri
 .bt-acc-exact { color:var(--green); }
 .bt-acc-close { color:var(--accent); }
 .bt-acc-miss  { color:var(--red); }
+/* Dos columnas backtesting */
+.bt-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .bt-two-col { grid-template-columns: 1fr; }
+}
+/* Tabla compacta pitcher (columna izquierda) */
+.bt-compact-table .st-th { padding: 5px 6px; font-size: 9px; }
+.bt-compact-table .st-td { padding: 5px 6px; font-size: 11px; }
+
 /* Historial */
 .hist-empty   { text-align:center; padding:3rem; color:var(--text3); font-size:14px; line-height:1.8; }
 .hist-table   { width:100%; border-collapse:collapse; }
@@ -4065,6 +4080,9 @@ async function btPickNewGame() {
         // s.date = "2025-03-27", s.game.gamePk = 778545
         const validGames = allSplits.filter(s => s.game?.gamePk && s.date);
 
+        // Criterio: pitcher con al menos 10 juegos en la temporada
+        if (validGames.length < 10) continue;
+
         const unused = validGames.filter(s =>
           !btShownKeys.has(`${pitcher.id}_${s.date}`)
         );
@@ -4185,7 +4203,7 @@ function btRender(prevStarts, roster) {
 
   document.getElementById('bt-area').innerHTML = `
     <div class="bt-context-box" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <img src="${pitcherPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);flex-shrink:0" onerror="this.style.display='none'">
+      <img src="${pitcherPhoto}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:center 10%;border:2px solid var(--border2);flex-shrink:0" onerror="this.style.display='none'">
       <div>
         <div class="bt-context-date">${dateFmt}</div>
         <div class="bt-context-matchup">${c.pitcherName} <span style="color:var(--text3);font-size:13px;font-weight:400">(${c.teamName})</span> vs ${c.oppName}</div>
@@ -4193,29 +4211,33 @@ function btRender(prevStarts, roster) {
       </div>
     </div>
 
-    <div class="bt-block">
-      <div class="bt-block-header">
-        <span class="bt-block-title">Últimas ${prevStarts.length} aperturas — ${c.pitcherName}</span>
-        <span style="font-size:11px;color:var(--text3);margin-left:auto">Juegos anteriores al ${c.date}</span>
+    <div class="bt-two-col">
+      <!-- Izquierda: últimas aperturas del pitcher -->
+      <div class="bt-block" style="min-width:0">
+        <div class="bt-block-header">
+          <span class="bt-block-title">Últimas ${prevStarts.length} aperturas</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto">antes del ${c.date}</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="st-table bt-compact-table">
+            <thead><tr>
+              <th class="st-th">FECHA</th><th class="st-th" style="text-align:left">OPP</th>
+              <th class="st-th">IP</th><th class="st-th">K</th><th class="st-th">H</th>
+              <th class="st-th">R</th><th class="st-th">ERA</th><th class="st-th">BB</th>
+            </tr></thead>
+            <tbody>${pitRows}</tbody>
+          </table>
+        </div>
       </div>
-      <div style="overflow-x:auto">
-        <table class="st-table" style="min-width:520px">
-          <thead><tr>
-            <th class="st-th">FECHA</th><th class="st-th" style="text-align:left">OPP</th>
-            <th class="st-th">IP</th><th class="st-th">K</th><th class="st-th">H</th>
-            <th class="st-th">R</th><th class="st-th">ERA</th><th class="st-th">BB</th>
-          </tr></thead>
-          <tbody>${pitRows}</tbody>
-        </table>
-      </div>
-    </div>
 
-    <div class="bt-block">
-      <div class="bt-block-header">
-        <span class="bt-block-title">Roster ${c.oppName}</span>
-        <span style="font-size:11px;color:var(--text3);margin-left:auto">Click en bateador → últimos 15 juegos anteriores</span>
+      <!-- Derecha: roster rival -->
+      <div class="bt-block" style="min-width:0">
+        <div class="bt-block-header">
+          <span class="bt-block-title">Bateadores ${c.oppName}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto">▾ ver últimos 15 juegos</span>
+        </div>
+        <div id="bt-roster-list">${rosterHTML}</div>
       </div>
-      <div id="bt-roster-list">${rosterHTML}</div>
     </div>
 
     <div class="bt-predict-box" id="bt-predict-box">
@@ -4323,8 +4345,6 @@ function renderHistorial() {
   const avgDiff = (btHistory.reduce((s, e) => s + e.diff, 0) / total).toFixed(1);
 
   const rows = btHistory.map((e, i) => {
-    const diffCls = e.diff === 0 ? 'hist-diff-good' : e.diff <= 2 ? 'hist-diff-ok' : 'hist-diff-bad';
-    const diffStr = e.diff === 0 ? '✓ 0' : `±${e.diff}`;
     const dateFmt = new Date(e.date + 'T12:00:00').toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
     const photo   = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_60,q_auto:best/v1/people/${e.pitcherId}/headshot/67/current`;
     return `<tr class="hist-tr">
@@ -4337,29 +4357,37 @@ function renderHistorial() {
       </td>
       <td class="hist-td" style="font-family:'Azeret Mono',monospace;font-size:12px;white-space:nowrap">${dateFmt}</td>
       <td class="hist-td" style="font-size:12px">vs ${e.oppName}</td>
-      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;font-size:15px">${e.prediction}</td>
-      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;color:var(--accent);font-weight:700;font-size:15px">${e.actualKs}</td>
-      <td class="hist-td" style="text-align:center"><span class="${diffCls}">${diffStr}</span></td>
+      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;font-size:16px;font-weight:600">${e.prediction}</td>
+      <td class="hist-td" style="font-family:'Azeret Mono',monospace;text-align:center;color:var(--accent);font-weight:700;font-size:16px">${e.actualKs}</td>
     </tr>`;
   }).join('');
 
   area.innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-start">
       <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${total}</div><div class="hist-stat-lbl">EXÁMENES</div></div>
       <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--green)">${exact}</div><div class="hist-stat-lbl">EXACTOS</div></div>
       <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--accent2)">${close}</div><div class="hist-stat-lbl">DENTRO DE ±2K</div></div>
       <div class="hist-stat-card"><div class="hist-stat-num" style="color:var(--text)">${avgDiff}</div><div class="hist-stat-lbl">ERROR PROMEDIO</div></div>
+      <button onclick="btClearHistory()" style="margin-left:auto;padding:8px 18px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.3);border-radius:var(--radius);color:var(--red);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;align-self:center">🗑 Limpiar</button>
     </div>
     <div class="bt-block" style="overflow-x:auto">
       <table class="hist-table">
         <thead><tr>
           <th class="hist-th">#</th><th class="hist-th">PITCHER</th><th class="hist-th">FECHA</th>
-          <th class="hist-th">VS</th><th class="hist-th" style="text-align:center">TUS Ks</th>
-          <th class="hist-th" style="text-align:center">Ks REALES</th><th class="hist-th" style="text-align:center">DIFF</th>
+          <th class="hist-th">VS</th>
+          <th class="hist-th" style="text-align:center">TUS Ks</th>
+          <th class="hist-th" style="text-align:center">Ks REALES</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+function btClearHistory() {
+  if (!confirm('¿Limpiar todo el historial de exámenes?')) return;
+  btHistory = [];
+  localStorage.removeItem('bt_history');
+  renderHistorial();
 }
 
 </script>
