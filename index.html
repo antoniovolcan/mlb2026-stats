@@ -3495,8 +3495,8 @@ async function vsToggleBatterDetail(uid, batterId, batterName, pitId) {
       const r = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitId}/stats?stats=gameLog&season=2026&group=pitching&gameType=R&sportId=1`);
       const d = await r.json();
       vsGLCache[pitId] = (d.stats?.[0]?.splits || [])
-        .map(s => ({ gamePk: s.game?.gamePk, date: (s.game?.gameDate || '').slice(0, 10) }))
-        .filter(g => g.gamePk);
+        .map(s => ({ gamePk: s.game?.gamePk, date: s.date || '' }))
+        .filter(g => g.gamePk && g.date);
     }
     const games = vsGLCache[pitId];
 
@@ -4062,19 +4062,17 @@ async function btPickNewGame() {
         const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pitcher.id}/stats?stats=gameLog&season=2025&group=pitching&gameType=R&sportId=1`);
         const d   = await res.json();
         const allSplits = d.stats?.[0]?.splits || [];
-        // Considerar cualquier aparición con gamePk y fecha válidos
-        const validGames = allSplits.filter(s => s.game?.gamePk && s.game?.gameDate);
+        // s.date = "2025-03-27", s.game.gamePk = 778545
+        const validGames = allSplits.filter(s => s.game?.gamePk && s.date);
 
-        const unused = validGames.filter(s => {
-          const date = (s.game.gameDate || '').slice(0, 10);
-          return !btShownKeys.has(`${pitcher.id}_${date}`);
-        });
+        const unused = validGames.filter(s =>
+          !btShownKeys.has(`${pitcher.id}_${s.date}`)
+        );
 
         if (unused.length) {
           const pick = unused[Math.floor(Math.random() * unused.length)];
-          // Calcular previas: todos los juegos antes de este, los últimos 15
           const prevGames = validGames
-            .filter(s => (s.game.gameDate || '').slice(0, 10) < (pick.game.gameDate || '').slice(0, 10))
+            .filter(s => s.date < pick.date)
             .slice(-15);
           found = { pitcher, split: pick, prevGames };
           break;
@@ -4093,7 +4091,7 @@ async function btPickNewGame() {
     }
 
     const { pitcher, split, prevGames } = found;
-    const date      = (split.game?.gameDate || '').slice(0, 10);
+    const date      = split.date || '';
     const gamePk    = split.game?.gamePk;
     const oppTeamId = split.opponent?.id;
     const oppName   = split.opponent?.name || split.opponent?.abbreviation || '—';
@@ -4124,7 +4122,7 @@ async function btPickNewGame() {
 }
 
 function btPitcherRow(s) {
-  const date = (s.game?.gameDate || '').slice(5, 10).replace('-', '/');
+  const date = (s.date || '').slice(5).replace('-', '/');
   const opp  = (TEAM_ABBR && TEAM_ABBR[s.opponent?.id]) || s.opponent?.abbreviation || '?';
   const loc  = s.isHome ? 'vs' : '@';
   const dec  = s.isWin  ? `<span style="color:var(--green);font-weight:700">W</span>`
@@ -4146,7 +4144,7 @@ function btPitcherRow(s) {
 }
 
 function btBatterRow(s) {
-  const date = (s.game?.gameDate || '').slice(5, 10).replace('-', '/');
+  const date = (s.date || '').slice(5).replace('-', '/');
   const opp  = (TEAM_ABBR && TEAM_ABBR[s.opponent?.id]) || s.opponent?.abbreviation || '?';
   const loc  = s.isHome ? 'vs' : '@';
   const ab   = s.stat?.atBats        ?? '—';
@@ -4253,7 +4251,7 @@ async function btToggleBatterGL(pid, name, beforeDate) {
     const res = await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=gameLog&season=2025&group=hitting&gameType=R&sportId=1`);
     const d   = await res.json();
     const splits = (d.stats?.[0]?.splits || [])
-      .filter(s => (s.game?.gameDate || '').slice(0, 10) < beforeDate)
+      .filter(s => s.date && s.date < beforeDate)
       .slice(-15);
     btBatterCache[pid] = splits;
     btRenderBatterGL(pid, splits);
